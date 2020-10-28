@@ -12,6 +12,7 @@ ipykernel = "*"
 jupyter = "*"
 ipympl = "*"
 pandas = "*"
+networkx = "*"
 
 [requires]
 python_version = "3.8"
