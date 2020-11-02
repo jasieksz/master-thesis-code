@@ -9,54 +9,68 @@ import networkx as nx
 from matplotlib import pyplot as plt
 
 #%%
-profiles = np.load('profiles/P44.npy')
-profiles.shape
-
-#%%
 def profileDataFrame(A):
     candidates = [chr(ord('A')+i) for i in range(A.shape[1])]
     voters = ['v'+str(i) for i in range(A.shape[0])]
     return pd.DataFrame(A, voters, candidates)
 
-#%%
-index = np.random.randint(0,7176)
-# index = 5643
-P = profiles[index]
+def delCand(profile, candIndex):
+    return np.delete(profile, candIndex, axis=1)
 
-if(sum(sum(P)) == 9 and True):
-    print(index)
-    print(profileDataFrame(P))
+def delVote(profile, voteIndex):
+    return np.delete(profile, voteIndex, axis=0)
 
+def cleanProfile(profile, delVoters, delCands):
+    for voter in delVoters:
+        profile = delVote(profile, voter)
+    for cand in delCands:
+        profile = delCand(profile, cand)
+    return profile
+
+def drawGraph(profile):
+    dim = profile.shape
     G = nx.Graph()
-    V = [0, 1, 2, 3]
-    C = ['A', 'B', 'C', 'D']
-    G.add_nodes_from(C)
+
+    V = list(range(dim[0]))
     G.add_nodes_from(V)
 
-    for voter in range(len(V)):
-        for cand in range(len(C)):
-            if (P[voter][cand] == 1):
+    C = [chr(ord('A')+i) for i in range(dim[1])] 
+    G.add_nodes_from(C)
+
+    for voter in range(dim[0]):
+        for cand in range(dim[1]):
+            if (profile[voter][cand] == 1):
                 G.add_edge(V[voter], C[cand])
 
-    # G.remove_node('A')
     pos = nx.spring_layout(G)
-    # nx.draw_networkx(G, pos, node_color=['r','r','r','r','g','g','g','g'][1:])
-    nx.draw_networkx(G, pos, node_color=['r','r','r','r','g','g','g','g'][:8])
+    nodeColors = ['g' for i in range(dim[0])] + ['r' for i in range(dim[1])] # V0, ... Vn, C0, ..., Cm
+    nx.draw_networkx(G, pos, node_color=nodeColors)
+    plt.show()
+
+#%%
+profiles = np.load('../profiles/P44.npy')
+profiles.shape
+
+#%%
+index = np.random.randint(0,7176)
+P = profiles[index]
+if(sum(sum(P)) >= 9):
+    print(index)
+    print(profileDataFrame(P))
+    drawGraph(P)
+
+#%%
+cleanedP = cleanProfile(P, delVoters=[3], delCands=[])
+print(profileDataFrame(cleanedP))
+drawGraph(cleanedP)
+
 
 
 #%%
 VCR44 = np.array([1,1,0,0,0,1,1,0,0,1,0,1,1,1,1,1]).reshape(4,4)
 print(profileDataFrame(VCR44))
+drawGraph(VCR44)
+CVCR = cleanProfile(VCR44, [3], [1])
+print(profileDataFrame(CVCR))
+drawGraph(CVCR)
 
-#%%
-CP = np.copy(P)
-CP = np.delete(CP, 2, axis=0)
-print(profileDataFrame(CP))
-
-#%%
-VCR44 = np.array([1,1,0,0,0,1,1,0,0,1,0,1,1,1,1,1]).reshape(4,4)
-print(profileDataFrame(VCR44))
-CVCR44 = np.copy(VCR44)
-CVCR44 = np.delete(CVCR44, 1, axis=1) #cols
-CVCR44 = np.delete(CVCR44, 3, axis=0) #rows
-print(profileDataFrame(CVCR44))

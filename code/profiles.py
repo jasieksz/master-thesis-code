@@ -100,3 +100,11 @@ A = np.load('P44.npy')
 
 #%%
 np.array_equal(A, P44)
+
+#%%
+A = np.array([[0, 0, 0, 1],
+       [0, 0, 1, 1],
+       [1, 0, 1, 0],
+       [0, 0, 1, 0]])
+
+any([consecutiveOnes2D(p) for p in getProfilePermutations(A)])
