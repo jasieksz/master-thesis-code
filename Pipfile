@@ -13,6 +13,8 @@ jupyter = "*"
 ipympl = "*"
 pandas = "*"
 networkx = "*"
+pulp = "*"
+autopep8 = "*"
 
 [requires]
 python_version = "3.8"

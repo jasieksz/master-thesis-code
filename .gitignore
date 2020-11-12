@@ -1,1 +1,3 @@
 Pipfile.lock
+.vscode
+code/__pycache__

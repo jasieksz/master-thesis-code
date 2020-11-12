@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 from sympy.utilities.iterables import multiset_permutations
+from typing import List
 import itertools
-import math
 
 def getAllSquareProfiles(candidate, voter):
     singleVotes = list(map(list, itertools.product([0,1], repeat=candidate)))
@@ -25,13 +25,7 @@ def consecutiveOnes2D(A):
     vr = [consecutiveOnes1D(A[i,:]) for i in range(A.shape[0])] # wiersze
     return all(cr) or all(vr)
 
-def emptyVote2D(A): # contains at least one empty vote (zeros)
-    return not all([sum(A[i]) != 0 for i in range(len(A))])
-
-def interestingProfile(profile):
-    return not consecutiveOnes2D(profile) and not emptyVote2D(profile)
-
-def shuffleProfile(profile, colSwap, rowSwap):
+def shuffleProfile(profile, colSwap: List[int], rowSwap: List[int]):
     SP = np.copy(profile)
     SP[:, list(range(len(colSwap)))] = SP[:,list(colSwap)] # swap candidates (Columns)
     SP[list(range(len(rowSwap)))] = SP[list(rowSwap)] # swap voters (rows)
@@ -49,8 +43,15 @@ def profileDataFrame(A):
     voters = ['v'+str(i) for i in range(A.shape[0])]
     return pd.DataFrame(A, voters, candidates)
 
-def generatePossibleVCR(candidate, voter):
-    P = getAllSquareProfiles(candidate, voter)
-    interestingProfiles = [p for p in P if interestingProfile(p)]
-    possibleVCRProfiles = [P for P in interestingProfiles if not any([consecutiveOnes2D(p) for p in getProfilePermutations(P)])]
-    return possibleVCRProfiles
+def deleteCandidate(profile: np.array, candIndex):
+    return np.delete(profile, candIndex, axis=1)
+
+def deleteVoter(profile, voteIndex):
+    return np.delete(profile, voteIndex, axis=0)
+
+def cleanProfile(profile, delVoters: List[int], delCands: List[int]):
+    for voter in delVoters:
+        profile = deleteVoter(profile, voter)
+    for cand in delCands:
+        profile = deleteCandidate(profile, cand)
+    return profile
