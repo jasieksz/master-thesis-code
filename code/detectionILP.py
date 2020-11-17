@@ -66,6 +66,7 @@ def detectorPosNeg(A, V: List[str], C: List[str]):
     Z1Vars = {
         C[c]+V[v] : LpVariable("Z1" + C[c]+V[v],0, 1, LpBinary) for c,v in indexPairs
     } 
+    
     Z2Vars = {
         C[c]+V[v] : LpVariable("Z2" + C[c]+V[v],0, 1, LpBinary) for c,v in indexPairs
     } 

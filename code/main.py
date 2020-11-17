@@ -2,54 +2,47 @@
 import numpy as np
 from profiles import VCR44, notVCR33, VCR22
 from definitions import Voter, Candidate, Profile, isVCR
-from helpers import consecutiveOnes2D
+from helpers import consecutiveOnes2D, getAllSquareProfiles
 from detectionILP import detectorMockDist, detectorPosNeg
 from pprint import pprint
 import math
+import time
+import multiprocessing
+import magic
+import pickle
+import itertools
 
 #%%
-def vcrDetectionPosNeg(approvals, voterIds, candidateIds):
-    problem, result = detectorPosNeg(approvals, voterIds, candidateIds)
+P44 = np.load('../profiles/P44.npy')
+P44.shape
 
-    # Create profile
-    voters = [Voter(id=vId, x=result['x'+vId], r=result['r'+vId]) for vId in voterIds]
-    candidates = [Candidate(id=cId, x=result['x'+cId], r=result['r'+cId]) for cId in candidateIds]
-    profile = Profile(approvals, voters, candidates)
+#%%
+def parallelVCRDetection(filePath: str, mapFun, mapIter) -> list:
+    startTime = time.time()
+    with multiprocessing.Pool(16) as p:
+        res = list(p.map(mapFun, mapIter))  
+    endTime = time.time()
+    print(endTime - startTime)
+    vcrRes = [p for (vcr,p) in res if vcr]
 
-    print("Status : " + str(problem.sol_status) + "\n")
-    if (problem.sol_status == -1):
-        print([con.name for con in list(problem.constraints.values()) if not con.valid()])
-    print(profile)
-    print("VCR : " + str(isVCR(profile)))
-    return profile, problem
+    with open(filePath, 'wb') as f:
+        pickle.dump(vcrRes, f)
+
+    return vcrRes
+
+#%%
+def parallelProfileGeneration(candidate, voter):
+    startTime = time.time()
+    with multiprocessing.Pool(1) as p:
+        singleVotes = list(p.map(list, itertools.product([0,1], repeat=candidate)))
+        profiles = list(p.map(list, itertools.product(singleVotes, repeat=voter)))
+        npProfiles = list(p.map(magic.npArray, profiles))
+    endTime = time.time()
+    print(endTime - startTime)
+    return np.array(npProfiles)
 
 
-#%% VCR 22
-approvals = np.array([1,1,0,1]).reshape(2,2)
-voterIds = ['v1', 'v2']
-candidateIds = ['A', 'B']
-P22, prob = vcrDetectionPosNeg(approvals, voterIds, candidateIds)
+#%%
+parallelProfileGeneration(4,4).shape
 
-#%% VCR 44
-approvals = np.array([1,1,1,1,1,1,0,0,0,1,0,1,0,1,1,0]).reshape(4,4)
-voterIds = ['v1', 'v2', 'v3', 'v4']
-candidateIds = ['A', 'B', 'C', 'D']
-P44, prob = vcrDetectionPosNeg(approvals, voterIds, candidateIds)
 
-#%% VCR 33
-approvals = np.array([1,0,0,0,1,0,0,0,1]).reshape(3,3)
-voterIds = ['v1', 'v2', 'v3']
-candidateIds = ['A', 'B', 'C']
-P33, prob = vcrDetectionPosNeg(approvals, voterIds, candidateIds)
-
-#%% NOT 33
-approvals = np.array([1,0,1,1,1,0,0,1,1]).reshape(3,3)
-voterIds = ['v1', 'v2', 'v3']
-candidateIds = ['A', 'B', 'C']
-notP33, prob = vcrDetectionPosNeg(approvals, voterIds, candidateIds)
-
-#%% NOT 44
-approvals = np.array([1,1,0,1,1,0,1,1,0,1,1,0,0,1,0,1]).reshape(4,4)
-voterIds = ['v1', 'v2', 'v3', 'v4']
-candidateIds = ['A', 'B', 'C', 'D']
-notP44, prob = vcrDetectionPosNeg(approvals, voterIds, candidateIds)

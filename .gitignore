@@ -1,3 +1,4 @@
 Pipfile.lock
 .vscode/
 code/__pycache__
+*.npy
