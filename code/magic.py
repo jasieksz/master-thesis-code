@@ -1,7 +1,6 @@
 import numpy as np
-from profiles import VCR44, notVCR33, VCR22
 from definitions import Voter, Candidate, Profile, isVCR
-from helpers import consecutiveOnes2D
+from helpers import consecutiveOnes2D, getProfilePermutations
 from detectionILP import detectorMockDist, detectorPosNeg
 from pprint import pprint
 import math
@@ -21,6 +20,9 @@ def vcrDetectionPosNeg(approvals, voterIds, candidateIds):
         return (False, profile)
 
 
+def vcr33Detection(A):
+    return vcrDetectionPosNeg(A, ['v1' ,'v2', 'v3'], ['A', 'B', 'C'])
+
 def vcr44Detection(A):
     return vcrDetectionPosNeg(A, ['v1' ,'v2', 'v3', 'v4'], ['A', 'B', 'C', 'D'])
 
@@ -32,3 +34,10 @@ def vcr66Detection(A):
 
 def npArray(A):
     return np.array(A)
+
+def COPFilter(P):
+    filtr = consecutiveOnes2D(P.A) or any([consecutiveOnes2D(p) for p in getProfilePermutations(P.A)])
+    return (filtr, P)
+
+def COPSingleFilter(P):
+    return (consecutiveOnes2D(P.A), P)

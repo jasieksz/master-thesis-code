@@ -398,3 +398,17 @@ approvals = np.array([1,1,0,1,1,0,1,1,0,1,1,0,0,1,0,1]).reshape(4,4)
 voterIds = ['v1', 'v2', 'v3', 'v4']
 candidateIds = ['A', 'B', 'C', 'D']
 notP44, prob = vcrDetectionPosNeg(approvals, voterIds, candidateIds)
+
+
+
+################################################3
+for i in range(10):
+    name = 'P55-' + str(i) + '.npy'
+    print(name)
+    with open(basePath+name, 'wb') as f:
+        start = window * i
+        end = window * (i+1)
+        if (i == 9):
+            np.save(f, allP55[start:])
+        else:
+            np.save(f, allP55[start:end])

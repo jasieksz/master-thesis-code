@@ -84,6 +84,6 @@ def detectorPosNeg(A, V: List[str], C: List[str]):
             prob += -(positions['x'+c] - positions['x'+v]) + M*(1 - Z2Vars[c+v]) >= radiuses['r'+c] + radiuses['r'+v] + 1, "notVCR-neg-" + c + v
             prob += Z1Vars[c+v] + Z2Vars[c+v] >= 1
             
-    prob.solve()
+    GUROBI(msg=0).solve(prob)
     ilpResult = {var.name : var.varValue for var in prob.variables()}
     return prob, ilpResult

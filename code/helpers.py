@@ -25,6 +25,12 @@ def consecutiveOnes2D(A):
     vr = [consecutiveOnes1D(A[i,:]) for i in range(A.shape[0])] # wiersze
     return all(cr) or all(vr)
 
+def consecutiveOnesCR(A):
+    return all([consecutiveOnes1D(A[:,i]) for i in range(A.shape[1])])
+
+def consecutiveOnesVR(A):
+    return all([consecutiveOnes1D(A[i,:]) for i in range(A.shape[0])])
+
 def shuffleProfile(profile, colSwap: List[int], rowSwap: List[int]):
     SP = np.copy(profile)
     SP[:, list(range(len(colSwap)))] = SP[:,list(colSwap)] # swap candidates (Columns)
