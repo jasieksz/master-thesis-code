@@ -1,5 +1,7 @@
 Pipfile.lock
 .vscode/
-code/__pycache__
+old-code/__pycache__
 *.npy
-profiles/profiles-5C-5V/vcr
+resources/profiles/profiles-5C-5V/vcr
+.idea/
+/resources/
