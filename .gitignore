@@ -5,3 +5,5 @@ old-code/__pycache__
 resources/profiles/profiles-5C-5V/vcr
 .idea/
 /resources/
+*/__pycache__/
+*/*/__pycache__/
