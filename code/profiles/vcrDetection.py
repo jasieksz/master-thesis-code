@@ -4,7 +4,7 @@ from typing import List
 from numpy import ndarray
 
 
-# %%
+#%%
 def detectVCRProperty(A: ndarray, C: List[str], V: List[str]):
     indexPairs = list(product(range(len(C)), range(len(V))))
 
@@ -38,19 +38,15 @@ def detectVCRProperty(A: ndarray, C: List[str], V: List[str]):
                 model.addConstr(-(positions['x' + c] - positions['x' + v]) + M * (1 - Z2Vars[c + v]) >= radiuses['r' + c] + radiuses['r' + v] + 1, "notVCR-neg-" + c + v)
                 model.addConstr(Z1Vars[c + v] + Z2Vars[c + v] >= 1)
 
-
         model.setParam('OutputFlag', False)
-        # model.setParam('FeasibilityTol', GUROBI_ACCURACY)
-        # model.setParam('PoolSearchMode', 0)
-
         model.optimize()
-        # print(model.Status)
+
         if model.Status == 2:
             return model.Status, {v.varName: v.X for v in model.getVars() if 'r' in v.varName or 'x' in v.varName}
         else:
             return model.Status, {}
 
-# %%
+#%%
 def detectVRProperty(A: ndarray, C: List[str], V: List[str]): # CR = 0
     indexPairs = list(product(range(len(C)), range(len(V))))
 
@@ -134,4 +130,3 @@ def detectCRProperty(A: ndarray, C: List[str], V: List[str]): # voter radius = 0
         model.optimize()
 
         return True if model.Status == 2 else False
-
