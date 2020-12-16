@@ -15,6 +15,7 @@ pandas = "*"
 networkx = "*"
 pulp = "*"
 autopep8 = "*"
+pyspark = "*"
 
 [requires]
 python_version = "3.8"

@@ -7,3 +7,5 @@ resources/profiles/profiles-5C-5V/vcr
 /resources/
 */__pycache__/
 */*/__pycache__/
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
