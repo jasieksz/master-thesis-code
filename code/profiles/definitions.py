@@ -43,7 +43,7 @@ class Profile(NamedTuple):
             array(self.A.shape),
             array([(c.x, c.r) for c in self.C]).flatten(),
             array([(v.x, v.r) for v in self.V]).flatten(),
-            self.A.flatten()])
+            self.A.flatten()])    
 
     @staticmethod
     def fromNumpy(npArray: ndarray):
