@@ -4,7 +4,9 @@ old-code/__pycache__
 *.npy
 resources/profiles/profiles-5C-5V/vcr
 .idea/
-/resources/
+flat-code/resources/input/
+flat-code/resources/output/
+
 */__pycache__/
 */*/__pycache__/
 .ipynb_checkpoints/
