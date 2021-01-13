@@ -3,7 +3,7 @@ import numpy as np
 from time import time
 from generation import parallelGenerateApprovalCombinations
 from definitions import Profile
-from vcrDetection import detectVCRProperty, detectCRProperty, detectVRProperty, createGPEnv
+from vcrDetectionAlt import detectVCRProperty, detectCRProperty, detectVRProperty, createGPEnv
 from utils import getNumpyColumns
 from functools import partial
 import sys
@@ -94,8 +94,11 @@ if __name__ == "__main__":
     
     C = int(sys.argv[1])
     V = int(sys.argv[2])
+    # path = "" if len(sys.argv) == 3 else "resources/input/{}C{}V/{}-p1-6.npy".format(C,V,sys.argv[3])
     path = "" if len(sys.argv) == 3 else "resources/input/{}C{}V/P{}{}-{}.npy".format(C,V,C,V,sys.argv[3])
     subset = 0 if len(sys.argv) == 3 else int(sys.argv[3])
+    LOGGER.warn("PATH : " + path)
+
     start = time()
     stats, vcrNCOPProfiles = run(C=C, V=V, loadPath=path, subset=subset)
     LOGGER.warn("TOTAL Time : " + str(time() - start))
