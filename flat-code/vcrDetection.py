@@ -1,3 +1,4 @@
+#%%
 import gurobipy as gp
 from itertools import product
 from typing import List

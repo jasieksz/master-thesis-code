@@ -15,7 +15,6 @@ def createGPEnv():
 # %%
 def detectVCRProperty(A: ndarray, C: List[str], V: List[str], env=None):
     indexPairs = list(product(range(len(C)), range(len(V))))
-    M = 1000
 
     if env is None:
         env = createGPEnv()
@@ -68,8 +67,6 @@ def detectVCRProperty(A: ndarray, C: List[str], V: List[str], env=None):
 # %%
 def detectVRProperty(A: ndarray, C: List[str], V: List[str], env):  # CR = 0
     indexPairs = list(product(range(len(C)), range(len(V))))
-    M = 1000
-
 
     if env is None:
         env = createGPEnv()
@@ -121,7 +118,6 @@ def detectVRProperty(A: ndarray, C: List[str], V: List[str], env):  # CR = 0
 # %%
 def detectCRProperty(A: ndarray, C: List[str], V: List[str], env):  # voter radius = 0
     indexPairs = list(product(range(len(C)), range(len(V))))
-    M = 1000
 
     if env is None:
         env = createGPEnv()

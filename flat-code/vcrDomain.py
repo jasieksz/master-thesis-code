@@ -1,7 +1,10 @@
 from math import sqrt
-from code.profiles.definitions import Profile, Voter, Candidate
+from definitions import Profile, Voter, Candidate
 from itertools import product
 
+
+def vcrPropertyRaw(voterX:float, voterR:float, candidateX:float,candidateR:float) -> bool:
+    return round(sqrt((voterX - candidateX) ** 2), 4) <= voterR + candidateR
 
 def vcrProperty(voter: Voter, candidate: Candidate) -> bool:
     return round(sqrt((voter.x - candidate.x) ** 2), 4) <= voter.r + candidate.r
