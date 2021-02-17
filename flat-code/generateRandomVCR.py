@@ -46,7 +46,7 @@ if __name__ == "__main__":
         path = "resources/input/{}C{}V/VCR-{}.npy".format(C, V, subSet)
 
         RNG = default_rng()
-        profiles = [generateRandomVCRProfile(RNG, C, V) for i in range(100000)]
+        profiles = [generateRandomVCRProfile(RNG, C, V) for i in range(10000)]
         if not all(map(isVCR, profiles)):
             print("BOOM")
         else:
@@ -56,10 +56,10 @@ if __name__ == "__main__":
     print(time() - startTime)
             
 #%%
-# path = "resources/input/{}C{}V/VCR-{}.npy".format(4,4,0)
-# profiles = np.load(path)
+path = "resources/input/{}C{}V/VCR-{}.npy".format(20,20,1)
+profiles = np.load(path)
 
-# #%%
-# P = Profile.fromNumpy(profiles[5])
-# print(P)
-# isVCR(P)
+#%%
+P = Profile.fromNumpy(profiles[95])
+print(sum(sum(P.A)))
+isVCR(P)

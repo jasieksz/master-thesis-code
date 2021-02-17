@@ -36,16 +36,16 @@ def run(C:int=3, V:int=3, loadPath:str="", subset:int=0, rangeS:int=0, rangeE:in
             rangeE = allProfiles.shape[0] + 1
         profilesRDD = sc.parallelize(allProfiles[rangeS:rangeE], numSlices=256).cache()
 
-    def partitionCOPFilter(partition):
+    def partitionCRFilter(partition):
         env = createGPEnv()
         for profile in partition:
-            yield ((detectCRProperty(A=profile.A, C=candidatesIds, V=votersIds, env=env) or detectVRProperty(A=profile.A, C=candidatesIds, V=votersIds, env=env)), profile)
+            yield (detectVRProperty(A=profile.A, C=candidatesIds, V=votersIds, env=env), profile)
 
     vcrNCOPProfilesRDD = profilesRDD \
         .map(lambda npProf: Profile.fromNumpy(npProf)) \
-        .mapPartitions(partitionCOPFilter) \
-        .filter(lambda COPpRes: not COPpRes[0]) \
-        .map(lambda COPpRes: COPpRes[1])
+        .mapPartitions(partitionCRFilter) \
+        .filter(lambda CrProf: CrProf[0]) \
+        .map(lambda CrProf: CrProf[1])
             
     NPRow = Row("rangeS", "rangeE", *tuple(getNumpyColumns(C,V)))
     schema = StructType([StructField("rangeS", IntegerType(), False),
@@ -59,19 +59,19 @@ def run(C:int=3, V:int=3, loadPath:str="", subset:int=0, rangeS:int=0, rangeE:in
     statistics["VCR"] = profilesRDD.count()
     LOGGER.warn("VCR " + str(statistics["VCR"]))
         
-    statistics["NCOPVCR"] = vcrNCOPProfilesRDD.count()
-    LOGGER.warn("NCOP VCR " + str(statistics["NCOPVCR"]))
+    statistics["CR"] = vcrNCOPProfilesRDD.count()
+    LOGGER.warn("CR " + str(statistics["CR"]))
     
     spark.createDataFrame(statistics.items(), ["key", "value"]) \
         .repartition(1) \
         .write \
         .mode('append') \
-        .parquet("resources/output/{}C{}V/{}-stats".format(C,V,subset))
+        .parquet("resources/output/{}C{}V/{}-CR-stats".format(C,V,subset))
         
     spark.createDataFrame(vcrNCOPNumpyRows, schema) \
         .write \
         .mode('append') \
-        .parquet("resources/output/{}C{}V/{}-profiles".format(C,V,subset)) \
+        .parquet("resources/output/{}C{}V/{}-CR-profiles".format(C,V,subset)) \
         
     return statistics, vcrNCOPNumpyRows
 

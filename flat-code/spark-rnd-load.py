@@ -53,8 +53,10 @@ if __name__ == "__main__":
     LOGGER = log4jLogger.LogManager.getLogger(__name__)
     LOGGER.warn("=================================== START ========================================")
 
+    # subset = '*' if int(subSet) == -1 else subset
+        
     loadStatistics(C=int(sys.argv[1]), V=int(sys.argv[2]), subSet=sys.argv[3]).show(n=50, truncate=False)
-    # loadStatistics(C=int(sys.argv[1]), V=int(sys.argv[2]), subSet=sys.argv[3]).groupBy("key").sum().show()
+    loadStatistics(C=int(sys.argv[1]), V=int(sys.argv[2]), subSet=sys.argv[3]).groupBy("key").sum().show()
     for profile in loadProfiles(C=int(sys.argv[1]), V=int(sys.argv[2]), subSet=sys.argv[3]).take(10):
         print("SUM 1 : ", sum(sum(profile.A)))
         print(profile.A)

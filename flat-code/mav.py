@@ -8,8 +8,12 @@ from numpy import ndarray
 
 #%% PROFILES
 def CR_44(): # <=> VI <=> foreach v in V : v_r = 0
-     return np.array([0,0,1,0,1,0,1,0,1,1,0,1,1,0,0,1]).reshape(4,4)
+    p1 = np.array([0,0,1,0,1,0,1,0,1,1,0,1,1,0,0,1]).reshape(4,4)
+    p2 = np.array([1,1,0,1,1,0,0,0,1,1,0,1,0,1,1,1]).reshape(4,4)
+    p3 = np.array([1,0,1,0,1,1,1,1,0,1,1,1,0,0,1,1]).reshape(4,4)
+    return np.array([p1,p2,p3])
 
+     
 #%% HELPERS
 def candsToLetters(C):
     return [chr(ord('A') + c) for c in C]
@@ -80,13 +84,16 @@ def minimaxCR(A, k, d):
     return K
 
 #%%
-A = CR_44()
-print(A)
+As = CR_44()
 
 #%%
-minimax(A, 2)
+minimax(As[1], 1)
 
 #%%
-mav = minimaxCR(A, k=2, d=2)
+mav = minimaxCR(As[1], k=1, d=2)
 mav.sort()
 candsToLetters(mav)
+
+
+# As[1] k=1 | d=2 -> K={A}, score=4 | Brute -> K={B} or {D} score=2
+# d = [0,1] Not Found
