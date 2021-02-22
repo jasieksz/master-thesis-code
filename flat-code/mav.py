@@ -5,13 +5,15 @@ from itertools import combinations
 from typing import List
 import math
 from numpy import ndarray
+from vcrDetectionAlt import findCRPoints
 
 #%% PROFILES
 def CR_44(): # <=> VI <=> foreach v in V : v_r = 0
     p1 = np.array([0,0,1,0,1,0,1,0,1,1,0,1,1,0,0,1]).reshape(4,4)
     p2 = np.array([1,1,0,1,1,0,0,0,1,1,0,1,0,1,1,1]).reshape(4,4)
     p3 = np.array([1,0,1,0,1,1,1,1,0,1,1,1,0,0,1,1]).reshape(4,4)
-    return np.array([p1,p2,p3])
+    p4 = np.array([1,0,0,0,1,1,1,0,1,1,1,0,0,1,1,1]).reshape(4,4)
+    return np.array([p1,p2,p3,p4])
 
      
 #%% HELPERS
@@ -69,14 +71,15 @@ def minimaxCR(A, k, d):
         s = hammingDistance2(vectorK, A[voterIndex]) + k - len(K)
         if s > d:
             r = math.ceil((s - d) / 2)
+            print(s, r)
             if r > k - len(K):
                 print("NOT FOUND K")
                 return []
             if r > len(X):
-                print("NOT FOUND X"):
+                print("NOT FOUND X")
                 return []
             
-            X_sorted = getCandsSortedByVoteFromVoter(A, X, voterIndex)
+            X_sorted = getCandsSortedByVoteFromVoter(A, X, voterIndex+1)
             for c in X_sorted[:r]:
                 print("Adding {} to {}".format(candsToLetters([c])[0], K))
                 K.append(c)
@@ -94,7 +97,7 @@ As = CR_44()
 minimax(As[1], 1)
 
 #%%
-mav = minimaxCR(As[1], k=1, d=0)
+mav = minimaxCR(As[3], k=1, d=2)
 mav.sort()
 candsToLetters(mav)
 
@@ -103,4 +106,11 @@ candsToLetters(mav)
 # d = [0,1] Not Found
 
 #%%
-As[1]
+b, d = findCRPoints(As[1], ['A', 'B', 'C', 'D'], ['v0', 'v1', 'v2', 'v3'], None)
+
+#%%
+As[3]
+#%%
+def getCROrder(votersIds: List[str], votersPoints: List[Tuple[int,float]]) -> List[int]:
+    idPoint = [(i,votersPoints['x'+vId]) for i,vId in enumerate(votersIds)]
+    
