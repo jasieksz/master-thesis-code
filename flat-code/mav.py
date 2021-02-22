@@ -59,6 +59,7 @@ def minimaxCR(A, k, d):
     C = [i for i in range(m)]
     K = []
     for voterIndex in range(n):
+        print("LOOP VOTER : {}".format(voterIndex))
         if len(K) == k:
             return K
 
@@ -68,8 +69,11 @@ def minimaxCR(A, k, d):
         s = hammingDistance2(vectorK, A[voterIndex]) + k - len(K)
         if s > d:
             r = math.ceil((s - d) / 2)
-            if r > k - len(K) or r > len(X):
-                print("NOT FOUND")
+            if r > k - len(K):
+                print("NOT FOUND K")
+                return []
+            if r > len(X):
+                print("NOT FOUND X"):
                 return []
             
             X_sorted = getCandsSortedByVoteFromVoter(A, X, voterIndex)
@@ -90,10 +94,13 @@ As = CR_44()
 minimax(As[1], 1)
 
 #%%
-mav = minimaxCR(As[1], k=1, d=2)
+mav = minimaxCR(As[1], k=1, d=0)
 mav.sort()
 candsToLetters(mav)
 
 
 # As[1] k=1 | d=2 -> K={A}, score=4 | Brute -> K={B} or {D} score=2
 # d = [0,1] Not Found
+
+#%%
+As[1]
