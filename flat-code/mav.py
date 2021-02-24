@@ -2,10 +2,12 @@
 import numpy as np
 from definitions import Profile, Candidate, Voter, VCR44
 from itertools import combinations
-from typing import List
+from typing import List, Tuple, Dict
 import math
 from numpy import ndarray
 from vcrDetectionAlt import findCRPoints
+from collections import namedtuple
+from crUtils import getProfileCRFromVCR
 
 #%% PROFILES
 def CR_44(): # <=> VI <=> foreach v in V : v_r = 0
@@ -106,11 +108,29 @@ candsToLetters(mav)
 # d = [0,1] Not Found
 
 #%%
-b, d = findCRPoints(As[1], ['A', 'B', 'C', 'D'], ['v0', 'v1', 'v2', 'v3'], None)
 
 #%%
-As[3]
+IdPosition = namedtuple('IdPosition', ['id', 'x'])
+
+def getCROrder(votersIds: List[str], votersPoints: Dict[str,float]) -> List[int]:
+    idsPoints = [IdPosition(i,votersPoints['x'+vId]) for i,vId in enumerate(votersIds)]
+    idsPoints.sort(key=lambda id_x: id_x[1])
+    return [idx.id for idx in idsPoints]
+
+def shuffleToCR(A:np.ndarray, voterOrder:List[int]) -> np.ndarray:
+    A_CR = np.array(A)
+    A_CR[list(range(A.shape[0]))] = A_CR[voterOrder]
+    return A_CR
+
+def getCRProfile(A:np.ndarray, gurobiEnv=None) -> Tuple[bool,np.ndarray]:
+    V,C = A.shape
+    vIds = ['v'+str(i) for i in range(V)]
+    cIds = ['c'+str(i) for i in range(C)]
+    foundSolution, positionDict = findCRPoints(A, cIds, vIds, gurobiEnv)
+    if (foundSolution == False):
+        return (False,A)
+    voterOrder = getCROrder(vIds, positionDict)
+    return (True, shuffleToCR(A, voterOrder))
+
 #%%
-def getCROrder(votersIds: List[str], votersPoints: List[Tuple[int,float]]) -> List[int]:
-    idPoint = [(i,votersPoints['x'+vId]) for i,vId in enumerate(votersIds)]
-    
+getProfileCRFromVCR(VCR44().A)
