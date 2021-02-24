@@ -55,11 +55,11 @@ if __name__ == "__main__":
                 np.save(file=f, arr=npProfiles, allow_pickle=False)
     print(time() - startTime)
             
-#%%
-path = "resources/input/{}C{}V/VCR-{}.npy".format(20,20,1)
-profiles = np.load(path)
+# #%%
+# path = "resources/input/{}C{}V/VCR-{}.npy".format(20,20,1)
+# profiles = np.load(path)
 
-#%%
-P = Profile.fromNumpy(profiles[95])
-print(sum(sum(P.A)))
-isVCR(P)
+# #%%
+# P = Profile.fromNumpy(profiles[95])
+# print(sum(sum(P.A)))
+# isVCR(P)
