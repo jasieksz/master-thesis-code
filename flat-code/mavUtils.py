@@ -9,6 +9,8 @@ from vcrDetectionAlt import findCRPoints
 from collections import namedtuple
 from crUtils import getProfileCRFromVCR
 from pprint import pprint
+from utils import shuffleRows, shuffleCols
+
 
 #%% HELPERS
 def candsToLetters(C):
@@ -39,16 +41,16 @@ def hammingDistance(a: np.ndarray, b: np.ndarray) -> int:
 def hammingDistance2(a: np.array, b: np.array) -> int:
     return sum(np.logical_xor(a, b))
 
-def mavScore(A: np.ndarray, committee: np.array) -> int:
+def mavScore(A: np.ndarray, committee: np.array) -> int: # O(nm)
     partialHD = lambda preference: hammingDistance(committee, preference)
-    return max([partialHD(pref) for pref in A])
+    return max([partialHD(vote) for vote in A])
 
-def minimax(A: np.ndarray, k: int) -> np.array:
+def minimax(A: np.ndarray, k: int) -> np.array: # O( n)
     candidateCount = A.shape[1]
-    scores = [(mavScore(A, committeeTupleToVector(committee, candidateCount)), [chr(ord('A') + i) for i in committee])
+    scores = [(mavScore(A, committeeTupleToVector(committee, candidateCount)), committee)
                 for committee in combinations(range(candidateCount), k)]
     scores.sort(key=lambda mavScore_committee: mavScore_committee[0])
-    return scores
+    return True, list(filter(lambda ms_c: ms_c[0] == scores[0][0], scores))
 
 def minimaxCR(A, k, d) -> Tuple[bool, List[int]]:
     n,m = A.shape # Vn Cm
@@ -158,7 +160,15 @@ def minimaxCR3(A, k, d) -> Tuple[bool, List[int]]:
 def saveArray(path, array):
     with open(path, 'wb') as f:
         np.save(file=f, arr=array, allow_pickle=False)
-    
+
+cmprMAVRes = namedtuple('cmprMAVRes',['status', 'score', 'kX', 'kY'])
+
+def basePartialCompare(A:np.ndarray, algoX, algoY) -> Tuple[bool, int, list, list]:
+    statusX, kX = algoX(A)
+    statusY, kY = algoY(A)
+    sX = mavScore(A, committeeTupleToVector(kX[0][1], A.shape[1])) if statusX else 7000
+    sY = mavScore(A, committeeTupleToVector(kY, A.shape[1])) if statusY else -7000
+    return cmprMAVRes(True, kX[0][0], kX, kY) if sX == sY else cmprMAVRes(False, -7, kX, kY)
 
 #%%
 def compare(profiles: np.ndarray, k:int, crParamD:int):
@@ -191,12 +201,22 @@ def compare(profiles: np.ndarray, k:int, crParamD:int):
 
     return results
 
-def analyze(profile, k, d, excl=False):
+def analyze(profile, k, d):
     print(profile, "\n")
-    # crSol = minimaxCRExcl(profile, k, d) if excl else minimaxCR(profile, k, d)
     crSol = minimaxCR3(profile, k, d)
     bruteSol = minimax(profile, k)
     print("Brute")
     pprint(bruteSol)
     print("\nCR")
     pprint(candsToLetters(crSol[1]))
+
+def getVCROrders(profile):                                                                                                                                                                                                                                                            
+    V, C = list(profile.V), list(profile.C)
+    V.sort(key=lambda t3: t3[1] - t3[2])
+    C.sort(key=lambda t3: t3[1] - t3[2])
+    V = list(map(lambda voter: int(voter.id[1:]), V))
+    C = list(map(lambda voter: int(voter.id[1:]), C))
+    return V, C
+
+def shuffleVC(A:np.ndarray, voterOrder:List[int], candOrder:List[int]) -> np.ndarray:
+    return shuffleCols(shuffleRows(A, voterOrder), candOrder)

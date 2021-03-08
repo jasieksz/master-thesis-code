@@ -49,7 +49,7 @@ class Profile(NamedTuple):
     def fromNumpy(npArray: ndarray):
         C = int(npArray[0])
         V = int(npArray[1])
-        candidates = [Candidate(id=chr(ord('A') + i), x=e[0], r=e[1]) for i, e in
+        candidates = [Candidate(id='C' + str(i), x=e[0], r=e[1]) for i, e in
                       enumerate(npArray[2:2 + 2 * C].reshape(C, 2))]
         voters = [Voter(id='V' + str(i), x=e[0], r=e[1]) for i, e in
                   enumerate(npArray[2 + 2 * C:2 + 2 * C + 2 * V].reshape(V, 2))]

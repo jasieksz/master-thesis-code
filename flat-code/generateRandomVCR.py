@@ -15,8 +15,8 @@ def generateRandomAgents(RNG, count:int,
     return np.dstack((positions, radii))[0]
 
 def generateRandomVCRProfile(RNG, C:int, V:int) -> Profile:
-    candidates = generateRandomAgents(RNG, C, 0, 35, 0, 95)
-    voters = generateRandomAgents(RNG, V, 0, 25, 0, 120)
+    candidates = generateRandomAgents(RNG, C, 0, 35, 0, 205)
+    voters = generateRandomAgents(RNG, V, 0, 30, 0, 180)
 
     A = np.zeros((V,C))
     for vI, (vX,vR) in enumerate(voters):
@@ -46,7 +46,7 @@ if __name__ == "__main__":
         path = "resources/input/{}C{}V/VCR-{}.npy".format(C, V, subSet)
 
         RNG = default_rng()
-        profiles = [generateRandomVCRProfile(RNG, C, V) for i in range(10000)]
+        profiles = [generateRandomVCRProfile(RNG, C, V) for i in range(500000)]
         if not all(map(isVCR, profiles)):
             print("BOOM")
         else:

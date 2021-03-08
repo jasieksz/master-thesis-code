@@ -45,8 +45,8 @@ def run(C:int=3, V:int=3, loadPath:str="", subset:int=0, rangeS:int=0, rangeE:in
         .map(lambda npProf: Profile.fromNumpy(npProf)) \
         .mapPartitions(partitionCOPFilter) \
         .filter(lambda COPpRes: not COPpRes[0]) \
-        .map(lambda COPpRes: COPpRes[1])
-            
+        .map(lambda COPpRes: COPpRes[1]) 
+
     NPRow = Row("rangeS", "rangeE", *tuple(getNumpyColumns(C,V)))
     schema = StructType([StructField("rangeS", IntegerType(), False),
                          StructField("rangeE", IntegerType(), False)] +
@@ -56,7 +56,7 @@ def run(C:int=3, V:int=3, loadPath:str="", subset:int=0, rangeS:int=0, rangeE:in
         .map(lambda profile: profile.asNumpy().tolist()) \
         .map(lambda a: NPRow(rangeS, rangeE, *tuple(a))) \
     
-    statistics["VCR"] = profilesRDD.count()
+    statistics["VCR"] = rangeE - rangeS # TODO TEMPORARY count
     LOGGER.warn("VCR " + str(statistics["VCR"]))
         
     statistics["NCOPVCR"] = vcrNCOPProfilesRDD.count()
@@ -92,6 +92,6 @@ if __name__ == "__main__":
     path = "" if len(sys.argv) == 3 else "resources/input/{}C{}V/VCR-{}.npy".format(C, V, sys.argv[3])
     subset = 0 if len(sys.argv) == 3 else int(sys.argv[3])
     start = time()
-    stats, vcrNCOPProfiles = run(C=C, V=V, loadPath=path, subset=subset, rangeS=0, rangeE=1000)
+    stats, vcrNCOPProfiles = run(C=C, V=V, loadPath=path, subset=subset, rangeS=100000, rangeE=300000)
     LOGGER.warn("TOTAL Time : " + str(time() - start))
     LOGGER.warn("Stats : " + str(stats))
