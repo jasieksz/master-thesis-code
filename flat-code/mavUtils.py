@@ -9,17 +9,7 @@ from vcrDetectionAlt import findCRPoints
 from collections import namedtuple
 from crUtils import getProfileCRFromVCR
 from pprint import pprint
-from time import time
 
-#%% PROFILES
-def CR_44(): # <=> VI <=> foreach v in V : v_r = 0
-    p1 = np.array([0,0,1,0,1,0,1,0,1,1,0,1,1,0,0,1]).reshape(4,4)
-    p2 = np.array([1,1,0,1,1,0,0,0,1,1,0,1,0,1,1,1]).reshape(4,4)
-    p3 = np.array([1,0,1,0,1,1,1,1,0,1,1,1,0,0,1,1]).reshape(4,4)
-    p4 = np.array([1,0,0,0,1,1,1,0,1,1,1,0,0,1,1,1]).reshape(4,4)
-    return np.array([p1,p2,p3,p4])
-
-     
 #%% HELPERS
 def candsToLetters(C):
     return [chr(ord('A') + c) for c in C]
@@ -171,23 +161,6 @@ def saveArray(path, array):
     
 
 #%%
-path = "resources/input/{}C{}V/VCR-{}.npy"
-
-VCR_55_P = np.load(path.format(5,5,0))
-VCR_55_A = np.array(list(map(lambda npp: Profile.fromNumpy(npp).A, VCR_55_P)))
-
-#%%
-# start = time()
-# CR_55_A = [pref for status,pref in (getProfileCRFromVCR(vcrp) for vcrp in VCR_55_A) if status == True]
-# time() - start
-
-#%%
-# saveArray("resources/tmp/CR_55_A.npy", CR_55_A)
-CR_55_A = np.load("resources/tmp/CR_55.npy")
-
-#%%
-
-#%%
 def compare(profiles: np.ndarray, k:int, crParamD:int):
     results = []
     for i, profile in enumerate(profiles):
@@ -227,59 +200,3 @@ def analyze(profile, k, d, excl=False):
     pprint(bruteSol)
     print("\nCR")
     pprint(candsToLetters(crSol[1]))
-    
-#%%
-d1 = list(filter(
-    lambda i_stat_eq: i_stat_eq[1] == True and i_stat_eq[2] == False,
-    compare(profiles=CR_55_A[:1000], k=2, crParamD=0)))
-
-len(d1)
-
-#%%
-analyze(profile=CR_55_A[d1[4][0]], k=2, d=5, excl=True)
-
-
-#%%
-d1[:30]
-
-#%%
-CR_44_A[250]
-
-#%%
-minimaxCR3(CR_44_A[250], 2, 3)
-
-#%%
-compare(profiles=[CR_44_A[250]], k=2, crParamD=0)
-
-#%%
-
-inclCRFalseRes = \
-[(28, True, False),
- (53, True, False),
- (57, True, False),
- (58, True, False),
- (79, True, False),
- (85, True, False),
- (90, True, False)]
-
-exlCRFalseRes = \
-[(6, True, False),
- (14, True, False),
- (15, True, False),
- (27, True, False),
- (28, True, False),
- (35, True, False),
- (37, True, False),
- (39, True, False),
- (50, True, False),
- (53, True, False),
- (57, True, False),
- (58, True, False),
- (77, True, False),
- (79, True, False),
- (80, True, False),
- (85, True, False),
- (86, True, False),
- (90, True, False),
- (97, True, False),
- (98, True, False)]

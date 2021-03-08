@@ -15,8 +15,8 @@ def generateRandomAgents(RNG, count:int,
     return np.dstack((positions, radii))[0]
 
 def generateRandomVCRProfile(RNG, C:int, V:int) -> Profile:
-    candidates = generateRandomAgents(RNG, C, 0, 100, 0, 750)
-    voters = generateRandomAgents(RNG, V, 0, 100, 0, 750)
+    candidates = generateRandomAgents(RNG, C, 0, 35, 0, 95)
+    voters = generateRandomAgents(RNG, V, 0, 25, 0, 120)
 
     A = np.zeros((V,C))
     for vI, (vX,vR) in enumerate(voters):

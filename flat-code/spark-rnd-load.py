@@ -27,7 +27,8 @@ def loadProfiles(C:int, V:int, subSet='*'):
     LOGGER.warn(vcrNCOPProfilesDF.rdd.isEmpty())
     return vcrNCOPProfilesDF.rdd \
         .map(lambda r: np.array(r, dtype=np.float)) \
-        .map(lambda npProf: Profile.fromNumpy(npProf[2:])) \
+        .map(lambda r: r[2:])
+        # .map(lambda npProf: Profile.fromNumpy(npProf[2:])) \
 
 def loadStatistics(C:int, V:int, subSet='*'):
     return spark.read \
@@ -55,14 +56,19 @@ if __name__ == "__main__":
 
     # subset = '*' if int(subSet) == -1 else subset
         
-    loadStatistics(C=int(sys.argv[1]), V=int(sys.argv[2]), subSet=sys.argv[3]).show(n=50, truncate=False)
+    # loadStatistics(C=int(sys.argv[1]), V=int(sys.argv[2]), subSet=sys.argv[3]).show(n=50, truncate=False)
     loadStatistics(C=int(sys.argv[1]), V=int(sys.argv[2]), subSet=sys.argv[3]).groupBy("key").sum().show()
-    for profile in loadProfiles(C=int(sys.argv[1]), V=int(sys.argv[2]), subSet=sys.argv[3]).take(10):
-        print("SUM 1 : ", sum(sum(profile.A)))
-        print(profile.A)
-        for c in profile.C:
-            print(c)
-        for v in profile.V:
-            print(v)
+    # for profile in loadProfiles(C=int(sys.argv[1]), V=int(sys.argv[2]), subSet=sys.argv[3]).take(10):
+    #     print("SUM 1 : ", sum(sum(profile.A)))
+    #     print(profile.A)
+    #     for c in profile.C:
+    #         print(c)
+    #     for v in profile.V:
+    #         print(v)
         
-        print("")
+    #     print("")
+
+    P = loadProfiles(C=int(sys.argv[1]), V=int(sys.argv[2]), subSet=sys.argv[3]).take(10)
+    P2 = np.array(P)
+    with open("resources/output/4C4V/NCOP-profiles/ncop-44-0.npy", 'wb') as f:
+        np.save(file=f, arr=P2, allow_pickle=False)
