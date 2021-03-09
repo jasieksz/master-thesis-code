@@ -208,7 +208,7 @@ def analyze(profile, k, d):
     print("Brute")
     pprint(bruteSol)
     print("\nCR")
-    pprint(candsToLetters(crSol[1]))
+    pprint(crSol[1])
 
 def getVCROrders(profile):                                                                                                                                                                                                                                                            
     V, C = list(profile.V), list(profile.C)

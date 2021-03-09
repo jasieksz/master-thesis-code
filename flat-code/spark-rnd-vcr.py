@@ -30,7 +30,7 @@ def run(C:int=3, V:int=3, loadPath:str="", subset:int=0, rangeS:int=0, rangeE:in
         return {}, []
     else:
         allProfiles = np.load(loadPath)
-        # LOGGER.warn("Profiles SHAPE : " + str(allProfiles.shape))
+        LOGGER.warn("Profiles SHAPE : " + str(allProfiles.shape))
 
         if rangeS == 0 and rangeE == 0:
             rangeE = allProfiles.shape[0] + 1
@@ -92,6 +92,6 @@ if __name__ == "__main__":
     path = "" if len(sys.argv) == 3 else "resources/input/{}C{}V/VCR-{}.npy".format(C, V, sys.argv[3])
     subset = 0 if len(sys.argv) == 3 else int(sys.argv[3])
     start = time()
-    stats, vcrNCOPProfiles = run(C=C, V=V, loadPath=path, subset=subset, rangeS=100000, rangeE=300000)
+    stats, vcrNCOPProfiles = run(C=C, V=V, loadPath=path, subset=subset, rangeS=100, rangeE=300000)
     LOGGER.warn("TOTAL Time : " + str(time() - start))
     LOGGER.warn("Stats : " + str(stats))

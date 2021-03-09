@@ -71,7 +71,10 @@ if __name__ == "__main__":
         
     #     print("")
 
-    P = loadProfiles(C=int(sys.argv[1]), V=int(sys.argv[2]), subSet=sys.argv[3]).collect()
+    C=int(sys.argv[1])
+    V=int(sys.argv[2])
+    subSet=int(sys.argv[3])
+    P = loadProfiles(C=C, V=V, subSet=subSet).collect()
     P2 = np.array(P)
-    with open("resources/output/5C5V/NCOP-profiles/ncop-55-2.npy", 'wb') as f:
+    with open("resources/output/{}C{}V/NCOP-profiles/ncop-{}{}-{}.npy".format(C,V,C,V,subSet), 'wb') as f:
         np.save(file=f, arr=P2, allow_pickle=False)
