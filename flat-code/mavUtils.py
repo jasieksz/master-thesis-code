@@ -154,7 +154,7 @@ def minimaxCR3(A, k, d) -> Tuple[bool, List[int]]:
         # print("ARBITRARY SELECTION - Current K = {}".format(K))
         for c in [c for c in C if c not in K][:(k-len(K))]:
             K.append(c)
-        return False,K
+        return True,K
     return True, K
 
 def saveArray(path, array):

@@ -17,6 +17,8 @@ pulp = "*"
 autopep8 = "*"
 pyspark = "*"
 gurobipy = {file = "https://pypi.gurobi.com/gurobipy/gurobipy-9.1.0-cp38-cp38-manylinux1_x86_64.whl"}
+seaborn = "*"
+notebook = "*"
 
 [requires]
 python_version = "3.8"

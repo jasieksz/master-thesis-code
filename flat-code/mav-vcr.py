@@ -23,6 +23,9 @@ def VCRNCOP_55():
 def VCRNCOP_55_2():
     return np.load("resources/output/5C5V/NCOP-profiles/ncop-55-2.npy")
 
+def VCRNCOP_55_3():
+    return np.load("resources/output/5C5V/NCOP-profiles/ncop-55-3.npy")
+
 def VCRNCOP_66():
     return np.load("resources/output/6C6V/NCOP-profiles/ncop-66-0.npy")
 
@@ -50,13 +53,27 @@ def parameterCompareMAVs(profiles, k, dRange):
 P44 = list(map(Profile.fromNumpy, VCRNCOP_44()))
 P55 = list(map(Profile.fromNumpy, VCRNCOP_55()))
 P55_2 = list(map(Profile.fromNumpy, VCRNCOP_55_2()))
+P55_3 = list(map(Profile.fromNumpy, VCRNCOP_55_3()))
 P66 = list(map(Profile.fromNumpy, VCRNCOP_66()))
 
 #%%
-parameterCompareMAVs(profiles=P66, k=2, dRange=range(7))
+parameterCompareMAVs(profiles=P44, k=4, dRange=range(7))
+
 
 #%%
-singleCompareMAVs(P55_2[13].A, k=3, d=5)
+# P55 
+# k=2 : {80}
+# k=3 : {8,9,45,73}
+# k=4 : {49, 86}
 
-#%%
-analyze(profile=P66[27].A, k=2, d=7)
+# P55_2
+# k=2 : {27, 53, 90, 101, 161, 166}
+# k=3 : {18, 56, 58, 80, 102, 117, 122, 163, 168, 173}
+# k=4 : {27, 40, 112, 128, 150, 158, 168, 174}
+# k=5 : {8, 62, 141}
+
+# P55_3
+# k=2 : {21}
+# k=3 : {}
+# k=4 : {5, 18, 19}
+# k=5 : {}
