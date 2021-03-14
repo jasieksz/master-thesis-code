@@ -9,7 +9,8 @@ from vcrDetectionAlt import findCRPoints
 from collections import namedtuple
 from pprint import pprint
 from time import time
-from mavUtils import minimax, minimaxCR3, analyze, mavScore, committeeTupleToVector, basePartialCompare
+from mavUtils import minimax, minimaxCR3, getVCROrders
+from mavUtils import analyze, mavScore, committeeTupleToVector, basePartialCompare
 from utils import shuffleRows, shuffleCols
 from functools import partial, reduce
 
@@ -57,8 +58,20 @@ P55_3 = list(map(Profile.fromNumpy, VCRNCOP_55_3()))
 P66 = list(map(Profile.fromNumpy, VCRNCOP_66()))
 
 #%%
-parameterCompareMAVs(profiles=P44, k=4, dRange=range(7))
+parameterCompareMAVs(profiles=P55, k=2, dRange=range(7))
 
+#%%
+analyze(profile=oA, k=2, d=2)
+
+#%%
+oV,oC = getVCROrders(P55[80])
+oA = shuffleRows(P55[80].A, oV)
+
+#%%
+oA
+
+#%%
+3*16*28
 
 #%%
 # P55 

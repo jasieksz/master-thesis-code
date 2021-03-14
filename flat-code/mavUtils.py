@@ -10,12 +10,22 @@ from collections import namedtuple
 from crUtils import getProfileCRFromVCR
 from pprint import pprint
 from utils import shuffleRows, shuffleCols
+from typing import NamedTuple, Any
 
+#%% Static status
+STATUS_FAIL = -1
+STATUS_OK = 1
+STATUS_APPROX = 2
+STATUS_OTHER = 3
+NO_SCORE = -7
+
+class MAVResult(NamedTuple):
+    status:int
+    W:List[List[int]]
+    score:int
+    other:Any
 
 #%% HELPERS
-def candsToLetters(C):
-    return [chr(ord('A') + c) for c in C]
-
 def getCandsSortedByVotes(A, X):
     b = [(i, sum(A[:,i])) for i in range(A.shape[1])]
     b.sort(key=lambda t: -t[1])
@@ -45,117 +55,46 @@ def mavScore(A: np.ndarray, committee: np.array) -> int: # O(nm)
     partialHD = lambda preference: hammingDistance(committee, preference)
     return max([partialHD(vote) for vote in A])
 
-def minimax(A: np.ndarray, k: int) -> np.array: # O( n)
+#
+# BRUTE FORCE MAV
+# 
+def minimax(A: np.ndarray, k: int) -> Tuple[int, List[List[int]]]:
     candidateCount = A.shape[1]
     scores = [(mavScore(A, committeeTupleToVector(committee, candidateCount)), committee)
                 for committee in combinations(range(candidateCount), k)]
     scores.sort(key=lambda mavScore_committee: mavScore_committee[0])
-    return True, list(filter(lambda ms_c: ms_c[0] == scores[0][0], scores))
-
-def minimaxCR(A, k, d) -> Tuple[bool, List[int]]:
+    return STATUS_OK, list(filter(lambda ms_c: ms_c[0] == scores[0][0], scores)),
+                    
+#
+# Liu& Guo CR MAV
+# 
+def minimaxCR(A, k, d) -> Tuple[int, List[int]]:
     n,m = A.shape # Vn Cm
     C = [i for i in range(m)]
     K = []
     for voterIndex in range(n):
-        # print("LOOP VOTER : {}".format(voterIndex))
         if len(K) == k:
-            return True, K
-
-        X = [candidate for candidate in C if candidate not in K]
-
-        vectorK = committeeTupleToVector(committee=K, C=m)
-        s = hammingDistance2(vectorK, A[voterIndex]) + k - len(K)
-        if s > d:
-            r = math.ceil((s - d) / 2)
-            if r > k - len(K):
-                # print("NOT FOUND K")
-                return False, []
-            if r > len(X):
-                # print("NOT FOUND X")
-                return False,[]
-            
-            X_sorted = getCandsSortedByVoteFromVoter(A, X, voterIndex)
-            for c in X_sorted[:r]:
-                # print("Adding {} to {}".format(candsToLetters([c])[0], K))
-                K.append(c)
-
-    if k > len(K):
-        # print("ARBITRARY SELECTION - Current K = {}".format(K))
-        for c in [c for c in C if c not in K][:(k-len(K))]:
-            K.append(c)
-        return False,K
-    return True, K
-
-
-def minimaxCRExcl(A, k, d) -> Tuple[bool, List[int]]:
-    n,m = A.shape # Vn Cm
-    C = [i for i in range(m)]
-    K = []
-    for voterIndex in range(n):
-        # print("LOOP VOTER : {}".format(voterIndex))
-        if len(K) == k:
-            return True, K
-
-        X = [candidate for candidate in C if candidate not in K]
-
-        vectorK = committeeTupleToVector(committee=K, C=m)
-        s = hammingDistance2(vectorK, A[voterIndex]) + k - len(K)
-        if s > d:
-            r = math.ceil((s - d) / 2)
-            if r > k - len(K):
-                # print("NOT FOUND K")
-                return False, []
-            if r > len(X):
-                # print("NOT FOUND X")
-                return False,[]
-            
-            X_sorted = getCandsSortedByVoteFromVoter(A, X, voterIndex+1)
-            for c in X_sorted[:r]:
-                # print("Adding {} to {}".format(candsToLetters([c])[0], K))
-                K.append(c)
-
-    if k > len(K):
-        # print("ARBITRARY SELECTION - Current K = {}".format(K))
-        for c in [c for c in C if c not in K][:(k-len(K))]:
-            K.append(c)
-        return False,K
-    return True, K
-
-
-############ v.3 limited X
-def minimaxCR3(A, k, d) -> Tuple[bool, List[int]]:
-    n,m = A.shape # Vn Cm
-    C = [i for i in range(m)]
-    K = []
-    for voterIndex in range(n):
-        # print("LOOP VOTER : {}".format(voterIndex))
-        if len(K) == k:
-            return True, K
+            return STATUS_OK, K
 
         X = [candidate for candidate in C if candidate not in K and A[voterIndex,candidate] == 1]
-
         vectorK = committeeTupleToVector(committee=K, C=m)
         s = hammingDistance2(vectorK, A[voterIndex]) + k - len(K)
         if s > d:
             r = math.ceil((s - d) / 2)
             if r > k - len(K):
-                # print("NOT FOUND K")
-                return False, []
+                return STATUS_FAIL,[]
             if r > len(X):
-                # print("NOT FOUND X")
-                return False,[]
+                return STATUS_FAIL,[]
             
             X_sorted = getCandsSortedByVoteFromVoter(A, X, voterIndex+1)
             for c in X_sorted[:r]:
-                # print("Adding {} to {}".format(candsToLetters([c])[0], K))
                 K.append(c)
 
     if k > len(K):
-        # print("ARBITRARY SELECTION - Current K = {}".format(K))
         for c in [c for c in C if c not in K][:(k-len(K))]:
             K.append(c)
-        return True,K
-    return True, K
+            return STATUS_APPROX, K
+    return STATUS_OK, K
 
 def saveArray(path, array):
     with open(path, 'wb') as f:
@@ -208,7 +147,7 @@ def analyze(profile, k, d):
     print("Brute")
     pprint(bruteSol)
     print("\nCR")
-    pprint(crSol[1])
+    pprint(crSol)
 
 def getVCROrders(profile):                                                                                                                                                                                                                                                            
     V, C = list(profile.V), list(profile.C)
