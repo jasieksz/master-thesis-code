@@ -2,8 +2,8 @@
 import numpy as np
 from time import time
 from generation import parallelGenerateApprovalCombinations
-from definitions import Profile
-from vcrDetectionBig import detectVCRProperty, detectCRProperty, detectVRProperty, createGPEnv
+from definitions import Profile, Candidate, Voter
+from vcrDetectionAlt import detectVCRProperty, detectCRProperty, detectVRProperty, createGPEnv
 from utils import getNumpyColumns
 from functools import partial
 import sys
@@ -25,39 +25,28 @@ def run(C:int=3, V:int=3, loadPath:str="", subset:int=0, rangeS:int=0, rangeE:in
     candidatesIds = ['c'+str(i) for i in range(C)]
     votersIds = [str(i) for i in range(V)]
 
-    def partitionVCRDetect(partition):
-        env = createGPEnv()
-        for p in partition:
-            yield (p,detectVCRProperty(A=p, C=candidatesIds, V=votersIds))
-
     if loadPath == "":
         LOGGER.error("Missing input profiles path")
         return {}, []
     else:
         allProfiles = np.load(loadPath)
-        # LOGGER.warn("Profiles SHAPE : " + str(allProfiles.shape))
+        LOGGER.warn("Profiles SHAPE : " + str(allProfiles.shape))
 
         if rangeS == 0 and rangeE == 0:
             rangeE = allProfiles.shape[0] + 1
         profilesRDD = sc.parallelize(allProfiles[rangeS:rangeE], numSlices=256).cache()
 
-    vcrProfilesRDD = profilesRDD.map(lambda p: np.array(p).reshape(C,V)) \
-            .mapPartitions(partitionVCRDetect) \
-            .filter(lambda pRes: pRes[1][0] == 2).cache()
-
-
     def partitionCOPFilter(partition):
         env = createGPEnv()
-        for pRes in partition:
-            yield ((detectCRProperty(A=pRes[0], C=candidatesIds, V=votersIds, env=env) or 
-                   detectVRProperty(A=pRes[0], C=candidatesIds, V=votersIds, env=env)), pRes)
+        for profile in partition:
+            yield ((detectCRProperty(A=profile.A, C=candidatesIds, V=votersIds, env=env) or detectVRProperty(A=profile.A, C=candidatesIds, V=votersIds, env=env)), profile)
 
-    vcrNCOPProfilesRDD = vcrProfilesRDD \
+    vcrNCOPProfilesRDD = profilesRDD \
+        .map(lambda npProf: Profile.fromNumpy(npProf)) \
         .mapPartitions(partitionCOPFilter) \
         .filter(lambda COPpRes: not COPpRes[0]) \
-        .map(lambda COPpRes: COPpRes[1]) \
-        .map(lambda pRes: Profile.fromILPRes(pRes[0], pRes[1][1], candidatesIds, votersIds))
-    
+        .map(lambda COPpRes: COPpRes[1]) 
+
     NPRow = Row("rangeS", "rangeE", *tuple(getNumpyColumns(C,V)))
     schema = StructType([StructField("rangeS", IntegerType(), False),
                          StructField("rangeE", IntegerType(), False)] +
@@ -67,7 +56,7 @@ def run(C:int=3, V:int=3, loadPath:str="", subset:int=0, rangeS:int=0, rangeE:in
         .map(lambda profile: profile.asNumpy().tolist()) \
         .map(lambda a: NPRow(rangeS, rangeE, *tuple(a))) \
     
-    statistics["VCR"] = vcrProfilesRDD.count()
+    statistics["VCR"] = rangeE - rangeS # TODO TEMPORARY count
     LOGGER.warn("VCR " + str(statistics["VCR"]))
         
     statistics["NCOPVCR"] = vcrNCOPProfilesRDD.count()
@@ -77,12 +66,12 @@ def run(C:int=3, V:int=3, loadPath:str="", subset:int=0, rangeS:int=0, rangeE:in
         .repartition(1) \
         .write \
         .mode('append') \
-        .parquet("resources/output/{}C{}V/{}-{}C{}V-stats".format(C,V,subset,C,V))
+        .parquet("resources/output/{}C{}V/{}-stats".format(C,V,subset))
         
     spark.createDataFrame(vcrNCOPNumpyRows, schema) \
         .write \
         .mode('append') \
-        .parquet("resources/output/{}C{}V/{}-{}C{}V".format(C,V,subset,C,V)) \
+        .parquet("resources/output/{}C{}V/{}-profiles".format(C,V,subset)) \
         
     return statistics, vcrNCOPNumpyRows
 
@@ -100,9 +89,10 @@ if __name__ == "__main__":
     
     C = int(sys.argv[1])
     V = int(sys.argv[2])
-    path = "" if len(sys.argv) == 3 else "resources/input/20C20V/VCR-{}".format(sys.argv[3])
+    print("penis")
+    path = "" if len(sys.argv) == 3 else "resources/input/{}C{}V/VCR-{}.npy".format(C, V, sys.argv[3])
     subset = 0 if len(sys.argv) == 3 else int(sys.argv[3])
     start = time()
-    stats, vcrNCOPProfiles = run(C=C, V=V, loadPath=path, subset=subset, rangeS=0, rangeE=100)
+    stats, vcrNCOPProfiles = run(C=C, V=V, loadPath=path, subset=subset, rangeS=250000, rangeE=500000)
     LOGGER.warn("TOTAL Time : " + str(time() - start))
     LOGGER.warn("Stats : " + str(stats))

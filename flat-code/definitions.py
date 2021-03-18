@@ -29,9 +29,13 @@ class Profile(NamedTuple):
     def __str__(self):
         res = str(self.A)
         res += "\n"
-        for c in self.C:
+        sC = list(self.C)
+        sV = list(self.V)
+        sV.sort(key=lambda t3: t3[1] - t3[2])
+        sC.sort(key=lambda t3: t3[1] - t3[2])
+        for c in sC:
             res += c.shortPrint() + "\n"
-        for v in self.V:
+        for v in sV:
             res += v.shortPrint() + "\n"
         return res
 

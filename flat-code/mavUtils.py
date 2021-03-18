@@ -19,10 +19,12 @@ STATUS_APPROX = 2
 STATUS_OTHER = 3
 NO_SCORE = -7
 
-class MAVResult(NamedTuple):
+class MAVCmpResult(NamedTuple):
     status:int
-    W:List[List[int]]
-    score:int
+    W1:List[List[int]]
+    W2:List[List[int]]
+    score1:int
+    score2:int
     other:Any
 
 #%% HELPERS
@@ -58,6 +60,13 @@ def mavScore(A: np.ndarray, committee: np.array) -> int: # O(nm)
 #
 # BRUTE FORCE MAV
 # 
+def minimaxFull(A: np.ndarray, k: int) -> Tuple[int, List[List[int]]]:
+    candidateCount = A.shape[1]
+    scores = [(mavScore(A, committeeTupleToVector(committee, candidateCount)), committee)
+                for committee in combinations(range(candidateCount), k)]
+    scores.sort(key=lambda mavScore_committee: mavScore_committee[0])
+    return STATUS_OK, scores                
+
 def minimax(A: np.ndarray, k: int) -> Tuple[int, List[List[int]]]:
     candidateCount = A.shape[1]
     scores = [(mavScore(A, committeeTupleToVector(committee, candidateCount)), committee)
@@ -93,7 +102,7 @@ def minimaxCR(A, k, d) -> Tuple[int, List[int]]:
     if k > len(K):
         for c in [c for c in C if c not in K][:(k-len(K))]:
             K.append(c)
-            return STATUS_APPROX, K
+        return STATUS_APPROX, K
     return STATUS_OK, K
 
 def saveArray(path, array):
@@ -103,46 +112,29 @@ def saveArray(path, array):
 cmprMAVRes = namedtuple('cmprMAVRes',['status', 'score', 'kX', 'kY'])
 
 def basePartialCompare(A:np.ndarray, algoX, algoY) -> Tuple[bool, int, list, list]:
-    statusX, kX = algoX(A)
-    statusY, kY = algoY(A)
-    sX = mavScore(A, committeeTupleToVector(kX[0][1], A.shape[1])) if statusX else 7000
-    sY = mavScore(A, committeeTupleToVector(kY, A.shape[1])) if statusY else -7000
-    return cmprMAVRes(True, kX[0][0], kX, kY) if sX == sY else cmprMAVRes(False, -7, kX, kY)
+    statusX, wX = algoX(A)
+    statusY, wY = algoY(A)
+    sX = mavScore(A, committeeTupleToVector(wX[0][1], A.shape[1])) if statusX != STATUS_FAIL else NO_SCORE
+    sY = mavScore(A, committeeTupleToVector(wY, A.shape[1])) if statusY != STATUS_FAIL else NO_SCORE
 
-#%%
-def compare(profiles: np.ndarray, k:int, crParamD:int):
-    results = []
-    for i, profile in enumerate(profiles):
-        bruteMinScore = minimax(profile, k)[0][0]
-        dDelta = 1
-        status, K = minimaxCR3(profile, k, crParamD)
-        while not status and dDelta <= 4:
-            # print("++", i)
-            status, K = minimaxCR3(profile, k, crParamD + dDelta)
-            dDelta +=1
-
-        if status:
-            crMinScore = mavScore(profile, committeeTupleToVector(K, profile.shape[1]))
-            copyK = K
-            while (not status or (status and bruteMinScore != crMinScore)) and dDelta <= 4:
-                # print("**", i)
-                status, K = minimaxCR3(profile, k, crParamD + dDelta)
-                crMinScore = mavScore(profile, committeeTupleToVector(K, profile.shape[1]))
-                dDelta += 1
-                if status:
-                    copyK = K
-            if status and bruteMinScore == crMinScore:           
-                results.append((i, True, bruteMinScore == crMinScore))
-            else:
-                results.append((i,True,False))
-        else:
-            results.append((i, False, False))
-
-    return results
+    if sX == sY and sY != NO_SCORE:
+        return MAVCmpResult(status=statusY,
+                            W1=wX,
+                            W2=wY,
+                            score1=sX,
+                            score2=sY,
+                            other=None)
+    elif sX != sY:
+        return MAVCmpResult(status=STATUS_FAIL,
+                            W1=wX,
+                            W2=wY,
+                            score1=sX,
+                            score2=sY,
+                            other=None)
 
 def analyze(profile, k, d):
     print(profile, "\n")
-    crSol = minimaxCR3(profile, k, d)
+    crSol = minimaxCR(profile, k, d)
     bruteSol = minimax(profile, k)
     print("Brute")
     pprint(bruteSol)
@@ -159,3 +151,18 @@ def getVCROrders(profile):
 
 def shuffleVC(A:np.ndarray, voterOrder:List[int], candOrder:List[int]) -> np.ndarray:
     return shuffleCols(shuffleRows(A, voterOrder), candOrder)
+
+def getVCRProfileInCROrder(profile:Profile) -> Profile:
+    oV, oC = getVCROrders(profile)
+    oA = shuffleRows(profile.A, oV)
+    return Profile(A=oA, C=profile.C, V=profile.V)
+
+def getVCRProfileInVROrder(profile:Profile) -> Profile:
+    oV, oC = getVCROrders(profile)
+    oA = shuffleCols(profile.A, oC)
+    return Profile(A=oA, C=profile.C, V=profile.V)
+
+def getVCRProfileInCRVROrder(profile:Profile) -> Profile:
+    oV, oC = getVCROrders(profile)
+    oA = shuffleVC(A=profile.A, voterOrder=oV, candOrder=oC)
+    return Profile(A=oA, C=profile.C, V=profile.V)
