@@ -27,7 +27,10 @@ def getNumpyColumns(C, V):
     for i in range(V):
         res.append("V"+str(i)+"x")
         res.append("V"+str(i)+"r")
-    for v in range(V):
+    for v in range(V):Env = createGPEnv()
+
+#%%
+detectCRProperty(P44[0].A, ['A', 'B', 'C', 'D'], ['v0', 'v1', 'v2', 'v3'], gEnv)
         for c in range(C):
             res.append("A"+str(v)+"_"+str(c))
     return res

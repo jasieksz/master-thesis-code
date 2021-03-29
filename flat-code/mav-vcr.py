@@ -137,3 +137,6 @@ a = np.array(P55_1[73].A)
 cVotes = [(c, sum(a[0:,c])) for c in range(a.shape[1])]
 vCands = [(v, sum(a[v])) for v in range(a.shape[0])]
 sorted(cVotes, key=lambda t: (-t[1], vCands[t[0]]))
+
+#%%
+print(P55_1[73])
