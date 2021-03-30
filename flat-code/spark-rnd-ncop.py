@@ -89,7 +89,6 @@ if __name__ == "__main__":
     
     C = int(sys.argv[1])
     V = int(sys.argv[2])
-    print("penis")
     path = "" if len(sys.argv) == 3 else "resources/input/{}C{}V/VCR-{}.npy".format(C, V, sys.argv[3])
     subset = 0 if len(sys.argv) == 3 else int(sys.argv[3])
     start = time()

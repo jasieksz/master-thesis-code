@@ -3,7 +3,7 @@ import numpy as np
 from time import time
 from generation import parallelGenerateApprovalCombinations
 from definitions import Profile
-from vcrDetection import detectVCRProperty, detectCRProperty, detectVRProperty, createGPEnv
+from vcrDetectionAlt import detectVCRProperty, detectCRProperty, detectVRProperty, createGPEnv
 from utils import getNumpyColumns
 from functools import partial
 import sys
