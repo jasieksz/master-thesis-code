@@ -114,10 +114,10 @@ A[[0,1,2,3]] = A[[2,3,1,0]]
 A
 
 #%%
-minimaxFull(A=P55_1[73].A, k=3)
+minimaxFull(A=P55_1[0].A, k=2)
 
 #%%
-minimaxCR(A=CR_P55_1[73].A, k=3, d=2)
+minimaxCR(A=CR_P55_1[].A, k=3, d=2)
 
 #%%
 def getCandsSortedByVoteFromVoter(A:ndarray, X:list, v:int) -> list:
