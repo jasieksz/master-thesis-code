@@ -6,6 +6,7 @@ from numpy import ndarray
 from matplotlib import pyplot as plt
 import seaborn as sns
 import pandas as pd
+from matplotlib import cm
 
 from typing import NamedTuple, List
 from definitions import Profile
@@ -29,6 +30,7 @@ def VCRNCOP_66():
 
 #%%
 P44 = list(map(Profile.fromNumpy, VCRNCOP_44()))
+P66 = list(map(Profile.fromNumpy, VCRNCOP_66()))
 
 #%%
 class Agent(NamedTuple):
@@ -39,15 +41,16 @@ class Agent(NamedTuple):
     color:str
 
 def vcrProfileToAgents(profile:Profile) -> List[Agent]:
+    oB = 0.25
     agents = []
-    for y,c in zip(np.arange(0.5, len(profile.C)/2 + 0.5, 0.5), profile.C):
+    for y,c in zip(np.arange(oB, len(profile.C)/2 + oB, oB), profile.C):
         a = Agent(id=c.id,
                 start=c.x - c.r,
                 end=c.x + c.r,
                 offset=y,
                 color='red')
         agents.append(a)
-    for y,v in zip(np.arange(-0.5, -len(profile.V)/2 - 0.5, -0.5), profile.V):
+    for y,v in zip(np.arange(-oB, -len(profile.V)/2 - oB, -oB), profile.V):
         a = Agent(id=v.id,
                 start=v.x - v.r,
                 end=v.x + v.r,
@@ -57,24 +60,26 @@ def vcrProfileToAgents(profile:Profile) -> List[Agent]:
     return agents
 
 def plotVCRAgents(agents:List[Agent]) -> None:
+    viridis = cm.get_cmap('seismic', len(agents)) 
+    oB = 0.05
     df = pd.DataFrame(agents)
     plt.figure(figsize=(10,8))
-    for a in agents:
+    for i,a in enumerate(agents):
         p1 = plt.hlines(y=a.offset,
                     xmin=a.start,
                     xmax=a.end,
                     label=a.id,
-                    color=a.color)
+                    color=viridis(i/len(agents)))
 
         p2 = plt.vlines(x=a.start,
-                        ymin=a.offset-0.1,
-                        ymax=a.offset+0.1, 
-                        color=a.color)
+                        ymin=a.offset-oB,
+                        ymax=a.offset+oB, 
+                        color=viridis(i/len(agents)))
 
         p3 = plt.vlines(x=a.end,
-                        ymin=a.offset-0.1,
-                        ymax=a.offset+0.1, 
-                        color=a.color)
+                        ymin=a.offset-oB,
+                        ymax=a.offset+oB, 
+                        color=viridis(i/len(agents)))
 
     plt.xlim([df.start.min()-1, df.end.max()+1])
     plt.ylim([df.offset.min()-1, df.offset.max()+1])
@@ -83,4 +88,4 @@ def plotVCRAgents(agents:List[Agent]) -> None:
     plt.show()
 
 #%%
-plotVCRAgents(vcrProfileToAgents(P44[0]))
+plotVCRAgents(vcrProfileToAgents(P66[10]))
