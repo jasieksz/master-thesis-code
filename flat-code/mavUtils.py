@@ -5,7 +5,7 @@ from itertools import combinations
 from typing import List, Tuple, Dict
 import math
 from numpy import ndarray
-from vcrDetectionAlt import findCRPoints
+from vcrDetectionAlt import findCRPoints, detectVCRProperty
 from collections import namedtuple
 from crUtils import getProfileCRFromVCR
 from pprint import pprint

@@ -3,10 +3,13 @@ from functools import partial
 
 import numpy as np
 from numpy import ndarray
+
 from matplotlib import pyplot as plt
 import seaborn as sns
 import pandas as pd
 from matplotlib import cm
+from matplotlib import ticker
+sns.set_style("darkgrid", {"axes.facecolor": ".8"})
 
 from typing import NamedTuple, List
 from definitions import Profile
@@ -59,9 +62,14 @@ def vcrProfileToAgents(profile:Profile) -> List[Agent]:
         agents.append(a)
     return agents
 
+
+def formatter(agents, y, pos):
+    return [a.id for a in agents if a.offset == y][0]
+
 def plotVCRAgents(agents:List[Agent]) -> None:
-    viridis = cm.get_cmap('seismic', len(agents)) 
-    oB = 0.05
+
+    viridis = cm.get_cmap('viridis', len(agents)) 
+    oB = 0.075
     df = pd.DataFrame(agents)
     plt.figure(figsize=(10,8))
     for i,a in enumerate(agents):
@@ -69,23 +77,37 @@ def plotVCRAgents(agents:List[Agent]) -> None:
                     xmin=a.start,
                     xmax=a.end,
                     label=a.id,
-                    color=viridis(i/len(agents)))
+                    color=a.color,#viridis(i/len(agents)),
+                    linewidth=4)
 
         p2 = plt.vlines(x=a.start,
                         ymin=a.offset-oB,
                         ymax=a.offset+oB, 
-                        color=viridis(i/len(agents)))
+                        color=a.color,#viridis(i/len(agents)),
+                        linewidth=4)
 
         p3 = plt.vlines(x=a.end,
                         ymin=a.offset-oB,
                         ymax=a.offset+oB, 
-                        color=viridis(i/len(agents)))
+                        color=a.color,#viridis(i/len(agents)),
+                        linewidth=4)
 
-    plt.xlim([df.start.min()-1, df.end.max()+1])
-    plt.ylim([df.offset.min()-1, df.offset.max()+1])
+    plt.xlim([df.start.min()-0.5, df.end.max()+0.5])
+    plt.ylim([df.offset.min()-0.5, df.offset.max()+0.5])
     plt.legend(bbox_to_anchor = (1.0, 1), loc = 'upper center')
     plt.grid(b=True, axis='x')
+    plt.yticks([a.offset for a in agents], [a.id for a in agents])
+    partialFormatter = partial(formatter, agents)
+    # plt.gca().yaxis.set_major_formatter(ticker.FuncFormatter(partialFormatter))
     plt.show()
 
 #%%
 plotVCRAgents(vcrProfileToAgents(P66[10]))
+
+#%%
+plotVCRAgents(vcrProfileToAgents(ccP))
+print(ccP)
+
+#%%
+list(zip(range(7),sum(ccP.A)))
+# list(zip(range(1,10),sum(ccP.A.transpose())))

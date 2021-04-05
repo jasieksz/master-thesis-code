@@ -9,7 +9,6 @@ from mavUtils import getVCRProfileInCROrder, getVCRProfileInVROrder, getVCRProfi
 from mavUtils import mavScore, basePartialCompare
 from mavUtils import minimax, minimaxFull, minimaxCR, STATUS_FAIL
 
-
 #%%
 def VCRNCOP_44():
     return np.load("resources/output/4C4V/NCOP-profiles/ncop-44-0.npy")
