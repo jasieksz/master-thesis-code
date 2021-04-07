@@ -32,14 +32,6 @@ def VCRNCOP_1010():
     A = np.load("resources/output/10C10V/NCOP-profiles/ncop-1010-0.npy")
     return list(map(Profile.fromNumpy, A))
 
-
-#%%
-P = VCRNCOP_55_1()
-
-#%%
-print(P[0])
-
-
 #%%
 # delete columns
 def deleteCandidates(A:np.ndarray, candidates:List[int]) -> np.ndarray:
@@ -88,33 +80,3 @@ def exampleRun():
     detectPF = partial(detectCRPropertyWrapper, gEnv)
     a = P1010[19].A
     combinationDeletionSearch(P1010[11].A, 1, detectPF)
-
-#%%
-from vcrDetectionAlt import findCRPoints, detectVCRProperty
-
-#%%
-ccA = np.array([0,0,0,0,0,1,
-                0,0,1,0,0,1,
-                0,1,1,0,0,1,
-                0,1,1,0,0,0,
-                1,1,1,0,0,0,
-                1,1,1,0,1,0,
-                1,0,0,1,1,0,
-                0,0,0,1,1,0,
-                0,0,0,1,0,0]).reshape(9,6)
-
-ccA
-
-#%%
-vs,cs =getVCLists(ccA)
-vcrRes = detectVCRProperty(ccA, cs, vs)
-
-#%%
-ccP = Profile.fromILPRes(ccA, vcrRes[1], cs, vs)
-
-#%%
-print(ccP)
-
-#%%
-ccA_iter1 = deleteVoters(ccP.A, [2,1,3])
-ccA_iter1
