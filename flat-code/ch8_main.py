@@ -1,26 +1,22 @@
 #%%
 from typing import List, NamedTuple, Tuple
 import numpy as np
-from itertools import combinations
+from itertools import combinations,chain
 
 from definitions import Profile, Candidate, Voter
 from vcrDetectionAlt import findCRPoints, detectVCRProperty
 from ch7_main import deleteVoters, deleteCandidates, getVCLists
+from ch7_main import VCRNCOP_55_1, VCRNCOP_66, VCRNCOP_1010
 
-#%%
-def VCRNCOP_55() -> List[Profile]:
-    A = np.load("resources/output/5C5V/NCOP-profiles/ncop-55-1.npy")
-    return list(map(Profile.fromNumpy, A))
-
-
-#%%
-Ps = VCRNCOP_55()
 
 #%%
 class avScore(NamedTuple):
     cId:int
     score:int
 
+def flatten(arr):
+    return list(chain(*arr))
+    
 def voteCount(A:np.ndarray, c:int) -> int:
     return int(sum(A[:,c]))
 
@@ -28,16 +24,15 @@ def avElection(A:np.ndarray) -> List[Tuple[int,int]]:
     idScores = sorted(zip(range(A.shape[1]), np.sum(A, axis=0)), key=lambda i_s: -i_s[1])
     return list(map(lambda i_s: avScore(i_s[0], i_s[1]), idScores))
     
-#%%
-# ConstructiveControl-DeleteVoters
 def scoreDelta(A:np.ndarray, c1:int, c2:int) -> int:
     return voteCount(A, c1) - voteCount(A, c2)
 
+#
+# ConstructiveControl-DeleteVoters - naive greedy approach
+#
 def cc_dv_naive(A:np.ndarray, p:int, deletedVoters:List[int]) -> List[int]:
-
-    #
+    
     # Helper functions
-    #
     columnOnesIndex = lambda arr,column: np.where(arr[:,column] == 1)[0]
     rowOnesIndex = lambda arr,row: np.where(arr[row] == 1)[0]
     descSecondSort = lambda tuple: -tuple[1]
@@ -46,12 +41,13 @@ def cc_dv_naive(A:np.ndarray, p:int, deletedVoters:List[int]) -> List[int]:
     N,M = A.shape 
     
     # voters we cannot delete
-    votersWhiteList = columnOnesIndex(A,p)
+    votersWhiteList = columnOnesIndex(A, p)
 
     # AV score for candidate p
     pScore = sum(A[:,p])
 
     # sorted (score desc.) candidates with score >= scoreP and not p
+    # avElection(A) returns List[Tuple(candidate, score)], sorted descending by score
     opponents = [candScore[0] for candScore in avElection(A) if candScore[1] >= pScore]
     opponents = [opponent for opponent in opponents if opponent != p]
         
@@ -63,7 +59,7 @@ def cc_dv_naive(A:np.ndarray, p:int, deletedVoters:List[int]) -> List[int]:
     nemesis = opponents[0]
 
     # voters who approve of nemesis and are not in the whitelist
-    nemesisVoters = [v for v in np.where(A[:,nemesis] == 1)[0] if v not in votersWhiteList]
+    nemesisVoters = [v for v in columnOnesIndex(A, nemesis) if v not in votersWhiteList]
 
     # how many voters we need to delete for p to beat nemesis
     votersToDeleteCount = scoreDelta(A, nemesis, p) + 1
@@ -73,7 +69,7 @@ def cc_dv_naive(A:np.ndarray, p:int, deletedVoters:List[int]) -> List[int]:
         return False,deletedVoters
 
     # opponents approved by nemesisVoters
-    nemesisVoterApprovedOpponents= [(nV,[c for c in rowOnesIndex(A,nV) if c in opponents]) for nV in nemesisVoters]
+    nemesisVoterApprovedOpponents= [(nV,[c for c in rowOnesIndex(A, nV) if c in opponents]) for nV in nemesisVoters]
     nemesisVoterApprovedOpponentsCount = [(nV, len(op)) for nV,op in nemesisVoterApprovedOpponents]
     
     # nemesisVoters sorted desc. by approved opponents count
@@ -87,12 +83,55 @@ def cc_dv_naive(A:np.ndarray, p:int, deletedVoters:List[int]) -> List[int]:
     # repeat
     return cc_dv_naive(A, p, deletedVoters)
 
+def cc_dv_brute(A:np.ndarray, p:int) -> List[List[int]]:
+    
+    # Helper functions
+    columnOnesIndex = lambda arr,column: np.where(arr[:,column] == 1)[0]
+    rowOnesIndex = lambda arr,row: np.where(arr[row] == 1)[0]
+    descSecondSort = lambda tuple: -tuple[1]
+    tupleIn = lambda tup,key: key in tup
+    tupleContains = lambda tup,keys: [tupleIn(tup,key) for key in keys]
+
+    deletedVoters = []
+    k = 1 # combination counter
+    N,M = A.shape # voters, candidates
+    whiteList = columnOnesIndex(A, p)
+
+    avScores = avElection(A)
+    if avScores[0][0] == p and avScores[0][1] != avScores[1][1]:
+        return True, deletedVoters
+
+    while(k < N):
+        voterCombination = [comb for comb in combinations(range(N), k) if not any(tupleContains(comb, whiteList))]
+        for comb in voterCombination:
+            tmpA = np.array(A) # make a copy
+            tmpA[list(comb)] = 0 # delete votes
+            avScores = avElection(tmpA)
+            if avScores[0][0] == p and avScores[0][1] != avScores[1][1]: # if p wins election tmpA
+                deletedVoters.append(list(comb))
+        if len(deletedVoters) > 0:
+            return True, deletedVoters
+        k += 1
+    return len(deletedVoters) != 0, deletedVoters
+
+def compareAlgos(profiles, vCount:int):
+    failedMsg = "p={}, i={}\n{}\nres1={}\nres2={}\n"
+    for p in range(vCount):
+        for i,profile in enumerate(profiles):
+            status1, combs1 = cc_dv_naive(np.array(profile.A), p, [])
+            status2, combs2 = cc_dv_brute(np.array(profile.A), p)
+
+            if (status1 != status2) or ((status1 and status2) and (combs1 != combs2)):
+                print(failedMsg.format(p,i,profile.A,combs1,combs2))
+
+
 #%%
-i = 1
-p = 1
-a = np.array(Ps[i].A)
-print(a)
-cc_dv_naive(a, p, [])
+compareAlgos(VCRNCOP_66(), 6)
+
+
+#%%
+c1 = [[1,2],[3]]
+
 
 
 #%%
@@ -109,23 +148,12 @@ ccA
 
 #%%
 
-#%%
-len(Ps)
+
 
 #%%
-vs,cs = getVCLists(ccA)
-vcrRes = detectVCRProperty(ccA, cs, vs)
-
-#%%
-ccP = Profile.fromILPRes(ccA, vcrRes[1], cs, vs)
-
-#%%
-print(ccP)
-
-#%%
-ccA_iter1 = deleteVoters(ccP.A, [2,1,3])
-ccA_iter1
-
-#%%
-# list(zip(range(7),sum(ccA_iter1)))
-list(zip(range(1,9),sum(ccA_iter1.transpose())))
+def randomStuff():
+    vs,cs = getVCLists(ccA)
+    vcrRes = detectVCRProperty(ccA, cs, vs)
+    ccP = Profile.fromILPRes(ccA, vcrRes[1], cs, vs)
+    list(zip(range(7),sum(ccA_iter1)))
+    list(zip(range(1,9),sum(ccA_iter1.transpose())))
