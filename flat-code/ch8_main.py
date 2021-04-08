@@ -31,18 +31,17 @@ def avElection(A:np.ndarray) -> List[Tuple[int,int]]:
 def scoreDelta(A:np.ndarray, c1:int, c2:int) -> int:
     return voteCount(A, c1) - voteCount(A, c2)
 
+columnOnesIndex = lambda arr,column: np.where(arr[:,column] == 1)[0] # List[int], indices of 1s in a given column
+rowOnesIndex = lambda arr,row: np.where(arr[row] == 1)[0] # List[int], indices of 1s in a given row
+descSecondSort = lambda tuple: -tuple[1] # Sorting key for Tuple2, descending
+tupleIn = lambda tup,key: key in tup # check if key is equal to any element of the tuple
+tupleContains = lambda tup,keys: [tupleIn(tup,key) for key in keys] # check if keys from the collection are in the given tuple
+
 #
 # Bruteforce AV-CC-DV - returns all possible combinations of voters to delete (of minimum size)
 #
 def cc_dv_brute(A:np.ndarray, p:int) -> List[List[int]]:
     
-    # Helper functions
-    columnOnesIndex = lambda arr,column: np.where(arr[:,column] == 1)[0]
-    rowOnesIndex = lambda arr,row: np.where(arr[row] == 1)[0]
-    descSecondSort = lambda tuple: -tuple[1]
-    tupleIn = lambda tup,key: key in tup
-    tupleContains = lambda tup,keys: [tupleIn(tup,key) for key in keys]
-
     deletedVoters = []
     k = 1 # combination counter
     N,M = A.shape # voters, candidates
@@ -82,19 +81,14 @@ def cc_dv_brute(A:np.ndarray, p:int) -> List[List[int]]:
 #
 def cc_dv_naive_broken(A:np.ndarray, p:int, deletedVoters:List[int]) -> List[int]:
     
-    # Helper functions
-    columnOnesIndex = lambda arr,column: np.where(arr[:,column] == 1)[0]
-    rowOnesIndex = lambda arr,row: np.where(arr[row] == 1)[0]
-    descSecondSort = lambda tuple: -tuple[1]
-
     # voters, candidates
     N,M = A.shape 
     
     # voters we cannot delete
-    votersWhiteList = columnOnesIndex(A, p)
+    votersWhiteList = columnOnesIndex(arr=A, column=p) 
 
     # AV score for candidate p
-    pScore = sum(A[:,p])
+    pScore = sum(A[:,p]) 
 
     # sorted (score desc.) candidates with score >= scoreP and not p
     # avElection(A) returns List[Tuple(candidate, score)], sorted descending by score
@@ -109,18 +103,17 @@ def cc_dv_naive_broken(A:np.ndarray, p:int, deletedVoters:List[int]) -> List[int
     nemesis = opponents[0]
 
     # voters who approve of nemesis and are not in the whitelist
-    nemesisVoters = [v for v in columnOnesIndex(A, nemesis) if v not in votersWhiteList]
+    nemesisVoters = [v for v in columnOnesIndex(arr=A, column=nemesis) if v not in votersWhiteList]
 
     # how many voters we need to delete for p to beat nemesis
-    votersToDeleteCount = scoreDelta(A, nemesis, p) + 1
+    votersToDeleteCount = scoreDelta(A, c1=nemesis, c2=p) + 1
 
     # if there is not enough voters to delete then p cannot win
     if len(nemesisVoters) < votersToDeleteCount:
         return False,deletedVoters
 
     # opponents approved by nemesisVoters
-
-    nemesisVoterApprovedOpponents= [(nV,[c for c in rowOnesIndex(A, nV) if c in opponents]) for nV in nemesisVoters]
+    nemesisVoterApprovedOpponents= [(nV,[c for c in rowOnesIndex(arr=A, row=nV) if c in opponents]) for nV in nemesisVoters]
     nemesisVoterApprovedOpponentsCount = [(nV, len(op)) for nV,op in nemesisVoterApprovedOpponents]
     
     # nemesisVoters sorted desc. by approved opponents count
@@ -138,22 +131,17 @@ def cc_dv_naive_broken(A:np.ndarray, p:int, deletedVoters:List[int]) -> List[int
 # fixed naive greedy solution - recalculating scores after each deletion
 #
 def cc_dv_naive_fixed(A:np.ndarray, p:int, deletedVoters:List[int]) -> List[int]:
-    
-    # Helper functions
-    columnOnesIndex = lambda arr,column: np.where(arr[:,column] == 1)[0]
-    rowOnesIndex = lambda arr,row: np.where(arr[row] == 1)[0]
-    descSecondSort = lambda tuple: -tuple[1]
-
     N,M = A.shape # voters, candidates
     
-    # voters we cannot delete
-    votersWhiteList = columnOnesIndex(A, p)
+    # voters we cannot delete - O(n)
+    votersWhiteList = columnOnesIndex(arr=A, column=p)
 
-    # AV score for candidate p
+    # AV score for candidate p - O(n)
     pScore = sum(A[:,p])
 
     # sorted (score desc.) candidates with score >= scoreP and not p
     # avElection(A) returns List[Tuple(candidate, score)], sorted descending by score
+    # O(nmlogm) - tak wystarczy max() zamist sort() (w avElection) czyli O(nm) 
     opponents = [candScore[0] for candScore in avElection(A) if candScore[1] >= pScore]
     opponents = [opponent for opponent in opponents if opponent != p]
         
@@ -164,7 +152,7 @@ def cc_dv_naive_fixed(A:np.ndarray, p:int, deletedVoters:List[int]) -> List[int]
     # opponent with highest score
     nemesis = opponents[0]
 
-    # voters who approve of nemesis and are not in the whitelist
+    # voters who approve of nemesis and are not in the whitelist - O(n)
     nemesisVoters = [v for v in columnOnesIndex(A, nemesis) if v not in votersWhiteList]
 
     # how many voters we need to delete for p to beat nemesis
@@ -174,28 +162,28 @@ def cc_dv_naive_fixed(A:np.ndarray, p:int, deletedVoters:List[int]) -> List[int]
     if len(nemesisVoters) < votersToDeleteCount:
         return False,deletedVoters
 
-    # opponents approved by nemesisVoters
+    # opponents approved by nemesisVoters - O(n * (nm + n + nm + n)) -> O(n^2 * m)
     tmpDelete = []
     for vD in range(votersToDeleteCount):
         # we need to recalculate avElection after every deletion, bcs.
         # nemesisVoterApprovedOpponents order might have changed (some c might not be opponent anymore after deleting v_{i-1})
-        opponents = [candScore[0] for candScore in avElection(A) if candScore[1] >= pScore]
+        opponents = [candScore[0] for candScore in avElection(A) if candScore[1] >= pScore] # O(nmlogm), wystarczy max() -> O(nm)
         opponents = [opponent for opponent in opponents if opponent != p]
 
-        nemesisVoters = [v for v in columnOnesIndex(A, nemesis) if v not in votersWhiteList]
-        nemesisVoterApprovedOpponents = [(nV,[c for c in rowOnesIndex(A, nV) if c in opponents]) for nV in nemesisVoters]
-        nemesisVoterApprovedOpponentsCount = [(nV, len(op)) for nV,op in nemesisVoterApprovedOpponents]
+        nemesisVoters = [v for v in columnOnesIndex(A, nemesis) if v not in votersWhiteList] # O(n)
+        nemesisVoterApprovedOpponents = [(nV,[c for c in rowOnesIndex(A, nV) if c in opponents]) for nV in nemesisVoters] # O(nm)
+        nemesisVoterApprovedOpponentsCount = [(nV, len(op)) for nV,op in nemesisVoterApprovedOpponents] # O(n)
         
-        # nemesisVoters sorted desc. by approved opponents count
+        # nemesisVoters sorted desc. by approved opponents count - O(nlogn), wystarczy max() -> O(n)
         nemesisVotersOpponentCount = sorted(nemesisVoterApprovedOpponentsCount, key=descSecondSort)
         
-        # delete voter (set row to 0s)
+        # delete voter (set row to 0s) # O(m)
         A[nemesisVotersOpponentCount[0][0]] = 0
         tmpDelete.append(nemesisVotersOpponentCount[0][0])
     
     deletedVoters.append(tmpDelete)
     # repeat
-    return cc_dv_naive_fixed(A, p, deletedVoters)
+    return cc_dv_naive_fixed(A, p, deletedVoters) # n * O(n^2 * m) - O(n^3 * m)
 
 #
 # Utility to compare results from different algos
@@ -219,7 +207,6 @@ def compareAlgos(profiles, vCount:int, algo):
             if (status1 != status2) or ((status1 and status2) and not resultComparator(combs1, combs2)):
                 print(failedMsg.format(p,i,profile.A,combs1,combs2))
                 pass
-
 #
 # Notebook
 #
