@@ -5,9 +5,10 @@ from itertools import combinations,chain
 from time import time
 
 from definitions import Profile, Candidate, Voter
-from vcrDetectionAlt import findCRPoints, detectVCRProperty
+from vcrDetectionAlt import findCRPoints, detectVCRProperty, createGPEnv
 from ch7_main import deleteVoters, deleteCandidates, getVCLists
 from ch7_main import VCRNCOP_55_1, VCRNCOP_55_2, VCRNCOP_55_3, VCRNCOP_66, VCRNCOP_1010
+from mavUtils import getVCROrders
 
 
 #%%
@@ -66,18 +67,6 @@ def cc_dv_brute(A:np.ndarray, p:int) -> List[List[int]]:
 
 #
 # ConstructiveControl-DeleteVoters - naive greedy approach
-# Not working for:
-# p=0, i=99
-#
-# [[1. 0. 0. 1. 0. 0.]
-#  [0. 1. 0. 0. 1. 0.]
-#  [1. 0. 0. 0. 0. 0.]
-#  [0. 1. 1. 1. 0. 0.]
-#  [0. 1. 0. 1. 1. 1.]
-#  [0. 0. 0. 0. 0. 1.]]
-#
-# res_naive=[[4, 1], [3]]
-# res_brute=[[3, 4]]
 #
 def cc_dv_naive_broken(A:np.ndarray, p:int, deletedVoters:List[int]) -> List[int]:
     
@@ -207,13 +196,65 @@ def compareAlgos(profiles, vCount:int, algo):
             if (status1 != status2) or ((status1 and status2) and not resultComparator(combs1, combs2)):
                 print(failedMsg.format(p,i,profile.A,combs1,combs2))
                 pass
+
+# start = time()
+# compareAlgos(VCRNCOP_66(), 6, cc_dv_naive_fix)
+# print(time() - start)
+
+#%%
+#
+# ConstructiveControl-DeleteVoters - vcr greedy sweeping
+#
+def getOpponents(A, p):
+    pScore = sum(A[:,p]) 
+    opponents = [candScore[0] for candScore in avElection(A) if candScore[1] >= pScore]
+    return [opponent for opponent in opponents if opponent != p]
+    
+def sortOpponentsByVCR(profile:Profile, opponents:List[int]) -> List[int]:
+    _,candOrder = getVCROrders(profile)
+    return [cand for cand in candOrder if cand in opponents]
+
+def sortVotersByVCR(profile:Profile, voters:List[int]) -> List[int]:
+    voteOrder,_ = getVCROrders(profile)
+    return [voter for voter in voteOrder if voter in voters]
+
+def cc_dv_vcr(P:Profile, p:int, deletedVoters:List[int]) -> List[int]:
+    
+    # voters, candidates
+    N,M = P.A.shape 
+    # voters we cannot delete
+    votersWhiteList = columnOnesIndex(arr=P.A, column=p) 
+    
+    opponents = getOpponents(A=P.A, p=p)
+    if len(opponents) == 0:
+        return True,deletedVoters
+
+    opponents = sortOpponentsByVCR(P, opponents)
+    nemesis = opponents[0]
+    nemesisVoters = [v for v in columnOnesIndex(arr=P.A, column=nemesis) if v not in votersWhiteList]
+    nemesisVoters = sortVotersByVCR(profile=P, voters=nemesisVoters)
+    # how many voters we need to delete for p to beat nemesis
+    delta = scoreDelta(P.A, c1=nemesis, c2=p) + 1
+    # if there is not enough voters to delete then p cannot win
+    if len(nemesisVoters) < delta:
+        return False,deletedVoters
+
+    # delete voters (set to vector 0)
+    P.A[nemesisVoters[:delta]] = 0
+    deletedVoters.append(nemesisVoters[:delta])
+
+    # repeat
+    return cc_dv_vcr(P, p, deletedVoters)
+
+
 #
 # Notebook
 #
 
 #%%
-P66 = VCRNCOP_66()
+gEnv = createGPEnv()
 
+#%%
 ccA = np.array([0,0,0,0,0,1,
                 0,0,1,0,0,1,
                 0,1,1,0,0,1,
@@ -224,10 +265,29 @@ ccA = np.array([0,0,0,0,0,1,
                 0,0,0,1,1,0,
                 0,0,0,1,0,0]).reshape(9,6)
 
+Vs,Cs = getVCLists(ccA)
+ilpStatus, ilpRes = detectVCRProperty(ccA, Cs, Vs, gEnv)
+ccP = Profile.fromILPRes(ccA, ilpRes, Cs, Vs)
+
 #%%
+
 start = time()
-compareAlgos(VCRNCOP_66(), 6, cc_dv_naive_fix)
+compareAlgos(VCRNCOP_66(), 6, cc_dv_naive_broken)
 print(time() - start)
 
 #%%
-cc_dv_brute(ccA,0)
+a = np.array(P66[0].A)
+print(a)
+b = deleteVoters(a, [1,2])
+print(a)
+b
+
+#%%
+a = [0,1,2,3,4,5]
+
+#%%
+cc_dv_vcr(P=ccP,p=0,deletedVoters=[])
+
+
+#%%
+ccP

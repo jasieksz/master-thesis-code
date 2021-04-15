@@ -62,6 +62,17 @@ def vcrProfileToAgents(profile:Profile) -> List[Agent]:
         agents.append(a)
     return agents
 
+def vcrProfileToAgentsWithDeletion(profile:Profile, deleteC:List, deleteV:List):
+    agents = vcrProfileToAgents(profile)
+    result = []
+    for a in agents:
+        if a.id in deleteC or a.id in deleteV:
+            tmpA = Agent(a.id, a.start, a.end, a.offset, 'green')
+            result.append(tmpA)
+        else:
+            result.append(a)
+    return result
+
 
 def formatter(agents, y, pos):
     return [a.id for a in agents if a.offset == y][0]
@@ -105,9 +116,12 @@ def plotVCRAgents(agents:List[Agent]) -> None:
 plotVCRAgents(vcrProfileToAgents(P66[10]))
 
 #%%
-plotVCRAgents(vcrProfileToAgents(ccP))
-print(ccP)
+plotVCRAgents(vcrProfileToAgentsWithDeletion(P66[99], ['C0'], ['V0','V2']))
+print(P66[99])
 
 #%%
 list(zip(range(7),sum(ccP.A)))
 # list(zip(range(1,10),sum(ccP.A.transpose())))
+
+#%%
+plotVCRAgents(vcrProfileToAgentsWithDeletion(ccP, ['c0'], ['v4','v5', 'v6']))
