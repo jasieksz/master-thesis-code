@@ -1,6 +1,7 @@
 #%%
 from definitions import Profile, Candidate, Voter
 from vcrDetectionAlt import detectVCRProperty, detectCRProperty, detectVRProperty, createGPEnv
+from mavUtils import getVCRProfileInCROrder, getVCRProfileInVROrder
 
 import numpy as np
 from itertools import combinations
@@ -31,6 +32,14 @@ def VCRNCOP_66():
 def VCRNCOP_1010():
     A = np.load("resources/output/10C10V/NCOP-profiles/ncop-1010-0.npy")
     return list(map(Profile.fromNumpy, A))
+
+def CR_66_0():
+    A = np.load("resources/output/6C6V/CR-profiles/cr-66-0.npy")
+    return list(map(getVCRProfileInCROrder,map(Profile.fromNumpy, A)))
+
+def VR_66_0():
+    A = np.load("resources/output/6C6V/VR-profiles/vr-66-0.npy")
+    return list(map(getVCRProfileInVROrder,map(Profile.fromNumpy, A)))
 
 #%%
 # delete columns

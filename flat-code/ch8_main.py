@@ -3,12 +3,13 @@ from typing import List, NamedTuple, Tuple
 import numpy as np
 from itertools import combinations,chain
 from time import time
+import copy
 
 from definitions import Profile, Candidate, Voter
 from vcrDetectionAlt import findCRPoints, detectVCRProperty, createGPEnv
 from ch7_main import deleteVoters, deleteCandidates, getVCLists
-from ch7_main import VCRNCOP_55_1, VCRNCOP_55_2, VCRNCOP_55_3, VCRNCOP_66, VCRNCOP_1010
-from mavUtils import getVCROrders
+from ch7_main import VCRNCOP_55_1, VCRNCOP_55_2, VCRNCOP_55_3, VCRNCOP_66, VCRNCOP_1010, CR_66_0, VR_66_0
+from mavUtils import getVCROrders,getVCRProfileInCRVROrder,getVCRProfileInCROrder,getVCRProfileInVROrder
 
 
 #%%
@@ -187,19 +188,16 @@ def resultComparator(combsNaive, combsBrute):
 # Verify algorithms vs bruteforce algo is an instance of greedy cc-dv
 #
 def compareAlgos(profiles, vCount:int, algo):
-    failedMsg = "p={}, i={}\n{}\nres1={}\nres2={}\n"
+    failedMsg = "p={}, i={}\n{}\nresAlgo={}\nresBrute={}\n"
     for p in range(vCount):
         for i,profile in enumerate(profiles):
-            status1, combs1 = algo(np.array(profile.A), p, [])
+            status1, combs1 = algo(copy.deepcopy(profile), p, [])
             status2, combs2 = cc_dv_brute(np.array(profile.A), p)
 
             if (status1 != status2) or ((status1 and status2) and not resultComparator(combs1, combs2)):
                 print(failedMsg.format(p,i,profile.A,combs1,combs2))
                 pass
 
-# start = time()
-# compareAlgos(VCRNCOP_66(), 6, cc_dv_naive_fix)
-# print(time() - start)
 
 #%%
 #
@@ -230,9 +228,11 @@ def cc_dv_vcr(P:Profile, p:int, deletedVoters:List[int]) -> List[int]:
         return True,deletedVoters
 
     opponents = sortOpponentsByVCR(P, opponents)
-    nemesis = opponents[0]
+    nemesis = opponents[-1]
     nemesisVoters = [v for v in columnOnesIndex(arr=P.A, column=nemesis) if v not in votersWhiteList]
     nemesisVoters = sortVotersByVCR(profile=P, voters=nemesisVoters)
+    nemesisVoters.reverse()
+
     # how many voters we need to delete for p to beat nemesis
     delta = scoreDelta(P.A, c1=nemesis, c2=p) + 1
     # if there is not enough voters to delete then p cannot win
@@ -245,7 +245,6 @@ def cc_dv_vcr(P:Profile, p:int, deletedVoters:List[int]) -> List[int]:
 
     # repeat
     return cc_dv_vcr(P, p, deletedVoters)
-
 
 #
 # Notebook
@@ -270,24 +269,35 @@ ilpStatus, ilpRes = detectVCRProperty(ccA, Cs, Vs, gEnv)
 ccP = Profile.fromILPRes(ccA, ilpRes, Cs, Vs)
 
 #%%
-
 start = time()
 compareAlgos(VCRNCOP_66(), 6, cc_dv_naive_broken)
 print(time() - start)
 
 #%%
-a = np.array(P66[0].A)
-print(a)
-b = deleteVoters(a, [1,2])
-print(a)
-b
-
-#%%
-a = [0,1,2,3,4,5]
-
-#%%
-cc_dv_vcr(P=ccP,p=0,deletedVoters=[])
+start = time()
+compareAlgos(CR_66_0(), 6, cc_dv_vcr)
+print(time() - start)
 
 
 #%%
-ccP
+P66 = VCRNCOP_66()
+CR66 = CR_66_0()
+VR66 = VR_66_0()
+
+#%%
+i = 1
+p = 0
+pr = copy.deepcopy(VR66[i])
+plotVCRAgents(vcrProfileToAgentsWithDeletion(pr, [], []))
+print(cc_dv_brute(np.copy(pr.A), p))
+cc_dv_vcr(P=pr,p=p,deletedVoters=[])
+
+#%%
+plotVCRAgents(vcrProfileToAgentsWithDeletion(pr, ['C0','C1','C5'], ['V1','V3','V4']))
+print(P66[i].A)
+
+#%%
+getVCRProfileInVROrder(VR66[0]).A
+
+#%%
+VR66[0].A
