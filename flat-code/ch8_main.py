@@ -8,9 +8,9 @@ import copy
 from definitions import Profile, Candidate, Voter
 from vcrDetectionAlt import findCRPoints, detectVCRProperty, createGPEnv
 from ch7_main import deleteVoters, deleteCandidates, getVCLists
-from ch7_main import VCRNCOP_55_1, VCRNCOP_55_2, VCRNCOP_55_3, VCRNCOP_66, VCRNCOP_1010, CR_66_0, VR_66_0
+from static_profiles import VCRNCOP_55_1, VCRNCOP_55_2, VCRNCOP_55_3, VCRNCOP_66, VCRNCOP_1010, CR_66_0, VR_66_0
 from mavUtils import getVCROrders,getVCRProfileInCRVROrder,getVCRProfileInCROrder,getVCRProfileInVROrder
-
+from vis_vcr import vcrProfileToAgentsWithDeletion, plotVCRAgents, vcrProfileToAgentsWithColors
 
 #%%
 #
@@ -246,58 +246,56 @@ def cc_dv_vcr(P:Profile, p:int, deletedVoters:List[int]) -> List[int]:
     # repeat
     return cc_dv_vcr(P, p, deletedVoters)
 
+def colorGenerator(cStr:str, vStr:str, profile:Profile, p:int):
+    opponents = getOpponents(A=profile.A, p=p)
+    pVoters = columnOnesIndex(arr=profile.A, column=p)
+    opponentsVoters = set(flatten([columnOnesIndex(profile.A,c) for c in opponents]))
+
+    opC = {cStr + str(op):'red' for op in opponents}
+    vWhiteList = {vStr + str(pV):'lightskyblue' for pV in pVoters}
+    vBlackList = {vStr + str(oV):'blue' for oV in opponentsVoters if not oV in pVoters}
+
+    return {cStr + str(p):'gold', **opC, **vWhiteList, **vBlackList}
 #
 # Notebook
 #
+def getCCProfile(gEnv) -> Profile:
+    ccA = np.array([0,0,0,0,0,1,
+                    0,0,1,0,0,1,
+                    0,1,1,0,0,1,
+                    0,1,1,0,0,0,
+                    1,1,1,0,0,0,
+                    1,1,1,0,1,0,
+                    1,0,0,1,1,0,
+                    0,0,0,1,1,0,
+                    0,0,0,1,0,0]).reshape(9,6)
 
-#%%
-gEnv = createGPEnv()
-
-#%%
-ccA = np.array([0,0,0,0,0,1,
-                0,0,1,0,0,1,
-                0,1,1,0,0,1,
-                0,1,1,0,0,0,
-                1,1,1,0,0,0,
-                1,1,1,0,1,0,
-                1,0,0,1,1,0,
-                0,0,0,1,1,0,
-                0,0,0,1,0,0]).reshape(9,6)
-
-Vs,Cs = getVCLists(ccA)
-ilpStatus, ilpRes = detectVCRProperty(ccA, Cs, Vs, gEnv)
-ccP = Profile.fromILPRes(ccA, ilpRes, Cs, Vs)
-
-#%%
-start = time()
-compareAlgos(VCRNCOP_66(), 6, cc_dv_naive_broken)
-print(time() - start)
-
-#%%
-start = time()
-compareAlgos(CR_66_0(), 6, cc_dv_vcr)
-print(time() - start)
-
+    Vs,Cs = getVCLists(ccA)
+    ilpStatus, ilpRes = detectVCRProperty(ccA, Cs, Vs, gEnv)
+    return Profile.fromILPRes(ccA, ilpRes, Cs, Vs)
 
 #%%
 P66 = VCRNCOP_66()
-CR66 = CR_66_0()
-VR66 = VR_66_0()
+gEnv = createGPEnv()
+ccP = getCCProfile(gEnv)
 
 #%%
-i = 1
+start = time()
+compareAlgos(P66, 6, cc_dv_vcr)
+print(time() - start)
+
+#%%
+plotVCRAgents(vcrProfileToAgentsWithColors(ccP, colorGenerator('c','v',ccP,0)))
+print(ccP.A)
+
+#%%
+i = 2
 p = 0
-pr = copy.deepcopy(VR66[i])
-plotVCRAgents(vcrProfileToAgentsWithDeletion(pr, [], []))
-print(cc_dv_brute(np.copy(pr.A), p))
-cc_dv_vcr(P=pr,p=p,deletedVoters=[])
 
 #%%
-plotVCRAgents(vcrProfileToAgentsWithDeletion(pr, ['C0','C1','C5'], ['V1','V3','V4']))
 print(P66[i].A)
+print("BRUTE : ", cc_dv_brute(np.copy(P66[i].A), p=p))
+print("VCR : ", cc_dv_vcr(copy.deepcopy(P66[i]), p=p, deletedVoters=[]))
 
 #%%
-getVCRProfileInVROrder(VR66[0]).A
-
-#%%
-VR66[0].A
+plotVCRAgents(vcrProfileToAgentsWithColors(P66[i], colorGenerator('C', 'V', P66[i], p)))

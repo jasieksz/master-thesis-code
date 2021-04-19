@@ -11,54 +11,40 @@ from matplotlib import cm
 from matplotlib import ticker
 sns.set_style("darkgrid", {"axes.facecolor": ".8"})
 
-from typing import NamedTuple, List
+from typing import NamedTuple, List, Dict
 from definitions import Profile
 
 
 #%%
-def VCRNCOP_44():
-    return np.load("resources/output/4C4V/NCOP-profiles/ncop-44-0.npy")
+voteCounter = lambda arr,column: np.sum() # List[int], indices of 1s in a given column
 
-def VCRNCOP_55_1():
-    return np.load("resources/output/5C5V/NCOP-profiles/ncop-55-1.npy")
-
-def VCRNCOP_55_2():
-    return np.load("resources/output/5C5V/NCOP-profiles/ncop-55-2.npy")
-
-def VCRNCOP_55_3():
-    return np.load("resources/output/5C5V/NCOP-profiles/ncop-55-3.npy")
-
-def VCRNCOP_66():
-    return np.load("resources/output/6C6V/NCOP-profiles/ncop-66-0.npy")
-
-#%%
-P44 = list(map(Profile.fromNumpy, VCRNCOP_44()))
-P66 = list(map(Profile.fromNumpy, VCRNCOP_66()))
-
-#%%
 class Agent(NamedTuple):
     id:str
     start:float
     end:float
     offset:float
+    voteCount:int
     color:str
 
 def vcrProfileToAgents(profile:Profile) -> List[Agent]:
     oB = 0.25
     agents = []
-    for y,c in zip(np.arange(oB, len(profile.C)/2 + oB, oB), profile.C):
+    voteCounts = sum(profile.A)
+    for y,c,vC in zip(np.arange(oB, len(profile.C)/2 + oB, oB), profile.C, voteCounts):
         a = Agent(id=c.id,
                 start=c.x - c.r,
                 end=c.x + c.r,
                 offset=y,
-                color='red')
+                voteCount=vC,
+                color='dimgray')
         agents.append(a)
     for y,v in zip(np.arange(-oB, -len(profile.V)/2 - oB, -oB), profile.V):
         a = Agent(id=v.id,
                 start=v.x - v.r,
                 end=v.x + v.r,
                 offset=y,
-                color='blue')
+                voteCount=0,
+                color='slategrey')
         agents.append(a)
     return agents
 
@@ -73,6 +59,14 @@ def vcrProfileToAgentsWithDeletion(profile:Profile, deleteC:List, deleteV:List):
             result.append(a)
     return result
 
+def vcrProfileToAgentsWithColors(profile:Profile, colors:Dict) -> List[Agent]:
+    agents = vcrProfileToAgents(profile)
+    result = []
+    for a in agents:
+        tmpA = Agent(a.id, a.start, a.end, a.offset, a.voteCount, colors.get(a.id, a.color))
+        result.append(tmpA)
+    return result
+   
 
 def formatter(agents, y, pos):
     return [a.id for a in agents if a.offset == y][0]
@@ -107,21 +101,12 @@ def plotVCRAgents(agents:List[Agent]) -> None:
     plt.ylim([df.offset.min()-0.5, df.offset.max()+0.5])
     plt.legend(bbox_to_anchor = (1.0, 1), loc = 'upper center')
     plt.grid(b=True, axis='x')
-    plt.yticks([a.offset for a in agents], [a.id for a in agents])
+    plt.yticks([a.offset for a in agents], [a.id + " vc=" + str(a.voteCount) for a in agents])
     partialFormatter = partial(formatter, agents)
     # plt.gca().yaxis.set_major_formatter(ticker.FuncFormatter(partialFormatter))
     plt.show()
 
 #%%
-plotVCRAgents(vcrProfileToAgents(P66[10]))
-
-#%%
-plotVCRAgents(vcrProfileToAgentsWithDeletion(P66[99], ['C0'], ['V0','V2']))
-print(P66[99])
-
-#%%
-list(zip(range(7),sum(ccP.A)))
-# list(zip(range(1,10),sum(ccP.A.transpose())))
-
-#%%
-plotVCRAgents(vcrProfileToAgentsWithDeletion(ccP, ['c0'], ['v4','v5', 'v6']))
+def run():
+    plotVCRAgents(vcrProfileToAgents(P66[10]))
+    plotVCRAgents(vcrProfileToAgentsWithDeletion(P66[99], ['C0'], ['V0','V2']))
