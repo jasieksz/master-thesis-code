@@ -211,7 +211,7 @@ def getOpponents(A, p):
     opponents = [candScore[0] for candScore in avElection(A) if candScore[1] >= pScore]
     return [opponent for opponent in opponents if opponent != p]
     
-def sortOpponentsByVCR(profile:Profile, opponents:List[int]) -> List[int]:
+def sortOpponentsByVCRBegining(profile:Profile, opponents:List[int]) -> List[int]:
     _,candOrder = getVCROrders(profile)
     return [cand for cand in candOrder if cand in opponents]
 
@@ -231,7 +231,7 @@ def cc_dv_vcr(P:Profile, p:int, deletedVoters:List[int]) -> List[int]:
     if len(opponents) == 0:
         return True,deletedVoters
 
-    opponents = sortOpponentsByVCR(P, opponents)
+    opponents = sortOpponentsByVCRBegining(P, opponents)
     nemesis = opponents[0]
     nemesisVoters = [v for v in columnOnesIndex(arr=P.A, column=nemesis) if v not in votersWhiteList]
     nemesisVoters = sortVotersByVCREnd(profile=P, voters=nemesisVoters)
