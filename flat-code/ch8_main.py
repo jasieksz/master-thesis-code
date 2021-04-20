@@ -1,5 +1,5 @@
 #%%
-from typing import List, NamedTuple, Tuple
+from typing import List, NamedTuple, Tuple, Dict
 import numpy as np
 from itertools import combinations,chain
 from time import time
@@ -8,8 +8,8 @@ import copy
 from definitions import Profile, Candidate, Voter
 from vcrDetectionAlt import findCRPoints, detectVCRProperty, createGPEnv
 from ch7_main import deleteVoters, deleteCandidates, getVCLists
-from static_profiles import VCRNCOP_55_1, VCRNCOP_55_2, VCRNCOP_55_3, VCRNCOP_66, VCRNCOP_1010, CR_66_0, VR_66_0
-from mavUtils import getVCROrders,getVCRProfileInCRVROrder,getVCRProfileInCROrder,getVCRProfileInVROrder
+from static_profiles import VCRNCOP_55_1, VCRNCOP_55_2, VCRNCOP_55_3, VCRNCOP_66, VCRNCOP_1010,VCR_1515_01k
+from mavUtils import getVCROrders,getVCRProfileInCRVROrder,getVCRProfileInCROrder,getVCRProfileInVROrder,getVCREndOrders
 from vis_vcr import vcrProfileToAgentsWithDeletion, plotVCRAgents, vcrProfileToAgentsWithColors
 
 #%%
@@ -188,6 +188,7 @@ def resultComparator(combsNaive, combsBrute):
 # Verify algorithms vs bruteforce algo is an instance of greedy cc-dv
 #
 def compareAlgos(profiles, vCount:int, algo):
+    result = []
     failedMsg = "p={}, i={}\n{}\nresAlgo={}\nresBrute={}\n"
     for p in range(vCount):
         for i,profile in enumerate(profiles):
@@ -195,8 +196,10 @@ def compareAlgos(profiles, vCount:int, algo):
             status2, combs2 = cc_dv_brute(np.array(profile.A), p)
 
             if (status1 != status2) or ((status1 and status2) and not resultComparator(combs1, combs2)):
-                print(failedMsg.format(p,i,profile.A,combs1,combs2))
+                # print(failedMsg.format(p,i,profile.A,combs1,combs2))
+                result.append((p,i,combs1,combs2))
                 pass
+    return result
 
 
 #%%
@@ -212,10 +215,11 @@ def sortOpponentsByVCR(profile:Profile, opponents:List[int]) -> List[int]:
     _,candOrder = getVCROrders(profile)
     return [cand for cand in candOrder if cand in opponents]
 
-def sortVotersByVCR(profile:Profile, voters:List[int]) -> List[int]:
-    voteOrder,_ = getVCROrders(profile)
+def sortVotersByVCREnd(profile:Profile, voters:List[int]) -> List[int]:
+    voteOrder,_ = getVCREndOrders(profile)
     return [voter for voter in voteOrder if voter in voters]
 
+#%%
 def cc_dv_vcr(P:Profile, p:int, deletedVoters:List[int]) -> List[int]:
     
     # voters, candidates
@@ -228,9 +232,9 @@ def cc_dv_vcr(P:Profile, p:int, deletedVoters:List[int]) -> List[int]:
         return True,deletedVoters
 
     opponents = sortOpponentsByVCR(P, opponents)
-    nemesis = opponents[-1]
+    nemesis = opponents[0]
     nemesisVoters = [v for v in columnOnesIndex(arr=P.A, column=nemesis) if v not in votersWhiteList]
-    nemesisVoters = sortVotersByVCR(profile=P, voters=nemesisVoters)
+    nemesisVoters = sortVotersByVCREnd(profile=P, voters=nemesisVoters)
     nemesisVoters.reverse()
 
     # how many voters we need to delete for p to beat nemesis
@@ -246,6 +250,11 @@ def cc_dv_vcr(P:Profile, p:int, deletedVoters:List[int]) -> List[int]:
     # repeat
     return cc_dv_vcr(P, p, deletedVoters)
 
+#%%
+#
+# Helpers
+#
+
 def colorGenerator(cStr:str, vStr:str, profile:Profile, p:int):
     opponents = getOpponents(A=profile.A, p=p)
     pVoters = columnOnesIndex(arr=profile.A, column=p)
@@ -256,9 +265,19 @@ def colorGenerator(cStr:str, vStr:str, profile:Profile, p:int):
     vBlackList = {vStr + str(oV):'blue' for oV in opponentsVoters if not oV in pVoters}
 
     return {cStr + str(p):'gold', **opC, **vWhiteList, **vBlackList}
-#
-# Notebook
-#
+
+def viableControlElections(profiles:List[Profile]) -> Dict[int,List[int]]:
+    pRange = profiles[0].A.shape[1]
+    return {
+        pId:list(
+                map(lambda t2: t2[0],
+                filter(lambda t3: t3[1][0] and len(t3[1][1]) > 0,
+                    ((i,cc_dv_brute(np.copy(p.A),0)) for i,p in enumerate(profiles))
+                ))
+            )
+        for pId in range(pRange)
+    }
+
 def getCCProfile(gEnv) -> Profile:
     ccA = np.array([0,0,0,0,0,1,
                     0,0,1,0,0,1,
@@ -274,28 +293,79 @@ def getCCProfile(gEnv) -> Profile:
     ilpStatus, ilpRes = detectVCRProperty(ccA, Cs, Vs, gEnv)
     return Profile.fromILPRes(ccA, ilpRes, Cs, Vs)
 
-#%%
-P66 = VCRNCOP_66()
-gEnv = createGPEnv()
-ccP = getCCProfile(gEnv)
+#
+# Notebook
+#
+
+# #%%
+# P66 = VCRNCOP_66()
+# gEnv = createGPEnv()
+# ccP = getCCProfile(gEnv)
+# # P66_CC = viableControlElections(P66)
+# # P1010 = VCRNCOP_1010()
+# # P1010_CC = viableControlElections(P1010)
+# P1515 = VCR_1515_01k()
+
+# #%%
+# start = time()
+# compareAlgos(P1515[], 15, cc_dv_vcr)
+# print(time() - start)
+
+# #%%
+# j = 1
+# p = 0
+# i = P1010_CC[p][j]
+
+# i = 0
+# p = 0
+# P = P1515
+# print(P[i].A)
+# print("\n", sum(P[i].A), "\n")
+# # print("BRUTE : ", cc_dv_brute(np.copy(P[i].A), p=p))
+# print("VCR : ", cc_dv_vcr(copy.deepcopy(P[i]), p=p, deletedVoters=[]))
+
+# plotVCRAgents(vcrProfileToAgentsWithColors(P[i], colorGenerator('C', 'V', P[i], p)))
+
+# #%%
+# def interestingCCForNCOP66() -> Dict[int, List[int]]:
+#     return {
+#         0:[77,85], # koniec na j=21
+#         1:[],
+#         2:[],
+#         3:[],       
+#         4:[],
+#         5:[] 
+#     }
+
+# #%%
+# ii = 153
+# pp = 5
+# print("BRUTE : ", cc_dv_brute(np.copy(P66[ii].A), p=pp))
+# print("VCR : ", cc_dv_vcr(copy.deepcopy(P66[ii]), p=pp, deletedVoters=[]))
+
+# #%%
+# AA = CR_66_0()[16].A
+# Vs,Cs = getVCLists(AA)
+# detectVCRProperty(AA, Cs, Vs) 
 
 #%%
-start = time()
-compareAlgos(P66, 6, cc_dv_vcr)
-print(time() - start)
+def VCR_1010_01k():
+    A = np.load("resources/output/10C10V/numpy/1010-0.npy")
+    return list(map(Profile.fromNumpy, A))
 
 #%%
-plotVCRAgents(vcrProfileToAgentsWithColors(ccP, colorGenerator('c','v',ccP,0)))
-print(ccP.A)
+def run(start:int, end:int):
+    P1515 = VCR_1515_01k()
+    print("Start {} End {}".format(s,e))
+    startTime = time()
+    res = compareAlgos(P1515[start:end], 15, cc_dv_vcr)
+    print("Total time {}".format(time() - startTime))
+    print("Reuslt\n", res)
 
 #%%
-i = 2
-p = 0
+import sys
 
-#%%
-print(P66[i].A)
-print("BRUTE : ", cc_dv_brute(np.copy(P66[i].A), p=p))
-print("VCR : ", cc_dv_vcr(copy.deepcopy(P66[i]), p=p, deletedVoters=[]))
-
-#%%
-plotVCRAgents(vcrProfileToAgentsWithColors(P66[i], colorGenerator('C', 'V', P66[i], p)))
+if __name__ == "__main__":
+    s = int(sys.argv[1])
+    e = int(sys.argv[2])
+    run(s,e)  

@@ -22,7 +22,7 @@ def loadProfiles(C:int, V:int, subSet='*'):
 
     vcrNCOPProfilesDF = spark.read \
         .option("mergeSchema", "true") \
-        .parquet("resources/output/{}C{}V/{}-CR-profiles".format(C,V,subSet))
+        .parquet("resources/output/{}C{}V/{}-profiles".format(C,V,subSet))
 
     LOGGER.warn(vcrNCOPProfilesDF.rdd.isEmpty())
     return vcrNCOPProfilesDF.rdd \
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     C=int(sys.argv[1])
     V=int(sys.argv[2])
     subSet=int(sys.argv[3])
-    P = loadProfiles(C=C, V=V, subSet=subSet).collect()
+    P = loadProfiles(C=C, V=V, subSet=subSet).take(1000)
     P2 = np.array(P)
-    with open("resources/output/{}C{}V/CR-profiles/cr-{}{}-{}.npy".format(C,V,C,V,subSet), 'wb') as f:
+    with open("resources/output/{}C{}V/numpy/{}{}-{}.npy".format(C,V,C,V,subSet), 'wb') as f:
         np.save(file=f, arr=P2, allow_pickle=False)

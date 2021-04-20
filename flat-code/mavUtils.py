@@ -149,6 +149,14 @@ def getVCROrders(profile):
     C = list(map(lambda voter: int(voter.id[1:]), C))
     return V, C
 
+def getVCREndOrders(profile):                                                                                                                                                                                                                                                            
+    V, C = list(profile.V), list(profile.C)
+    V.sort(key=lambda t3: t3[1] + t3[2]) # x + r
+    C.sort(key=lambda t3: t3[1] + t3[2]) # x + r
+    V = list(map(lambda voter: int(voter.id[1:]), V))
+    C = list(map(lambda voter: int(voter.id[1:]), C))
+    return V, C
+
 def shuffleVC(A:np.ndarray, voterOrder:List[int], candOrder:List[int]) -> np.ndarray:
     return shuffleCols(shuffleRows(A, voterOrder), candOrder)
 
