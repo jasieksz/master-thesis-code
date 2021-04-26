@@ -6,6 +6,7 @@ resources/profiles/profiles-5C-5V/vcr
 .idea/
 flat-code/resources/input/
 flat-code/resources/output/
+flat-code/resources/random/
 
 */__pycache__/
 */*/__pycache__/

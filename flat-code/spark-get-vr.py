@@ -20,7 +20,7 @@ from pyspark.sql.types import StructType, StructField, FloatType, IntegerType
 
 
 #%%
-def run(C:int=3, V:int=3, loadPath:str="", subset:int=0, rangeS:int=0, rangeE:int=0):
+def run(C:int, V:int, loadPath:str="", subset:int=0, rangeS:int=0, rangeE:int=0):
     statistics = {}
     candidatesIds = ['c'+str(i) for i in range(C)]
     votersIds = [str(i) for i in range(V)]
@@ -41,39 +41,27 @@ def run(C:int=3, V:int=3, loadPath:str="", subset:int=0, rangeS:int=0, rangeE:in
         for profile in partition:
             yield (detectVRProperty(A=profile.A, C=candidatesIds, V=votersIds, env=env), profile)
 
-    vcrNCOPProfilesRDD = profilesRDD \
+    VRProfilesRDD = profilesRDD \
         .map(lambda npProf: Profile.fromNumpy(npProf)) \
         .mapPartitions(partitionVRFilter) \
-        .filter(lambda CrProf: CrProf[0]) \
-        .map(lambda CrProf: CrProf[1])
+        .filter(lambda VrProf: VrProf[0]) \
+        .map(lambda VrProf: VrProf[1])
             
     NPRow = Row("rangeS", "rangeE", *tuple(getNumpyColumns(C,V)))
     schema = StructType([StructField("rangeS", IntegerType(), False),
                          StructField("rangeE", IntegerType(), False)] +
                         [StructField(n, FloatType(), False) for n in getNumpyColumns(C, V)])
     
-    vcrNCOPNumpyRows = vcrNCOPProfilesRDD \
+    VRNumpyRows = VRProfilesRDD \
         .map(lambda profile: profile.asNumpy().tolist()) \
         .map(lambda a: NPRow(rangeS, rangeE, *tuple(a))) \
-    
-    statistics["VCR"] = profilesRDD.count()
-    LOGGER.warn("VCR " + str(statistics["VCR"]))
-        
-    statistics["CR"] = vcrNCOPProfilesRDD.count()
-    LOGGER.warn("CR " + str(statistics["CR"]))
-    
-    spark.createDataFrame(statistics.items(), ["key", "value"]) \
-        .repartition(1) \
+            
+    spark.createDataFrame(VRNumpyRows, schema) \
         .write \
         .mode('append') \
-        .parquet("resources/output/{}C{}V/{}-VR-stats".format(C,V,subset))
+        .parquet("resources/random/spark/{}C{}V/vr-{}S-profiles".format(C,V,subset)) \
         
-    spark.createDataFrame(vcrNCOPNumpyRows, schema) \
-        .write \
-        .mode('append') \
-        .parquet("resources/output/{}C{}V/{}-VR-profiles".format(C,V,subset)) \
-        
-    return statistics, vcrNCOPNumpyRows
+    return VRNumpyRows
 
 #%%
 if __name__ == "__main__":
@@ -89,9 +77,11 @@ if __name__ == "__main__":
     
     C = int(sys.argv[1])
     V = int(sys.argv[2])
-    path = "" if len(sys.argv) == 3 else "resources/input/{}C{}V/VCR-{}.npy".format(C, V, sys.argv[3])
-    subset = 0 if len(sys.argv) == 3 else int(sys.argv[3])
+    subset = int(sys.argv[3])
+    path = "resources/random/numpy/vcr-{}C{}V-{}S.npy".format(C, V, subset)
+    LOGGER.warn("Using PATH: {}".format(path))
+
     start = time()
-    stats, vcrNCOPProfiles = run(C=C, V=V, loadPath=path, subset=subset, rangeS=0, rangeE=1000)
+    vrProfiles = run(C=C, V=V, loadPath=path, subset=subset, rangeS=0, rangeE=10000)
     LOGGER.warn("TOTAL Time : " + str(time() - start))
-    LOGGER.warn("Stats : " + str(stats))
+    LOGGER.warn("Stats : " + str(vrProfiles.count()))
