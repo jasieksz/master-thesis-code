@@ -31,7 +31,14 @@ def VCR_1515_01k():
     A = np.load("resources/output/15C15V/numpy/1515-0.npy")
     return list(map(Profile.fromNumpy, A))
 
+def VCR_77_0():
+    A = np.load("resources/random/numpy/vcr-7C7V-0S.npy")
+    return list(map(Profile.fromNumpy, A))
 
+def VR_77_0():
+    A = np.load("resources/random/numpy/vr-7C7V-0S.npy")
+    return list(map(Profile.fromNumpy, A))
+    
 # def CR_66_0():
 #     A = np.load("resources/output/6C6V/CR-profiles/cr-66-0.npy")
 #     return list(map(getVCRProfileInCROrder,map(Profile.fromNumpy, A)))

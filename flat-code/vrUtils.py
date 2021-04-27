@@ -1,10 +1,11 @@
 #%%
 from typing import List, Tuple, Dict
 from numpy import ndarray
-from vcrDetectionAlt import findVRPoints
+from vcrDetectionAlt import findVRPoints, detectVCRProperty
 from collections import namedtuple
 import numpy as np
 from definitions import Profile
+from vcrDomain import isVCR
 
 #%%
 IdPosition = namedtuple('IdPosition', ['id', 'x'])
@@ -27,4 +28,21 @@ def getFullProfileVRFromVCR(P:Profile, gurobiEnv=None) -> Tuple[bool,Profile]:
     if (foundSolution == False):
         return (False,None)
     voterOrder = getVROrder(cIds, positionDict)
-    return (True, Profile.fromILPRes(shuffleCols(P.A, voterOrder), positionDict, cIds, vIds))
+    vrA = shuffleCols(P.A, voterOrder)
+    pTmp = Profile.fromILPRes(vrA, positionDict, cIds, vIds)
+    pResult = getFullProfileVRFromVCRHelper(pTmp, gurobiEnv)
+    if isVCR(pResult):
+        return (True,pResult)
+    else:
+        print("BOOOOM")
+        (False, None)
+
+def getFullProfileVRFromVCRHelper(P:Profile, gurobiEnv=None) -> Profile:
+    V,C = P.A.shape
+    vIds = ['v'+str(i) for i in range(V)]
+    cIds = ['c'+str(i) for i in range(C)]
+    foundSolution, positionDict = findVRPoints(P.A, cIds, vIds, gurobiEnv)
+    if (foundSolution == False):
+        print("BOOOOM 2")
+        return None
+    return Profile.fromILPRes(P.A, positionDict, cIds, vIds)   

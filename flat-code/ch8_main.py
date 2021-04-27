@@ -6,11 +6,13 @@ from time import time
 import copy
 
 from definitions import Profile, Candidate, Voter
-from vcrDetectionAlt import findCRPoints, detectVCRProperty, createGPEnv
+from vcrDetectionAlt import findCRPoints, detectVCRProperty, createGPEnv, findVRPoints
 from ch7_main import deleteVoters, deleteCandidates, getVCLists
-from static_profiles import VCRNCOP_55_1, VCRNCOP_55_2, VCRNCOP_55_3, VCRNCOP_66, VCRNCOP_1010,VCR_1515_01k
+from static_profiles import VCRNCOP_55_1, VCRNCOP_55_2, VCRNCOP_55_3, VCRNCOP_66, VCRNCOP_1010,VCR_1515_01k, VCR_77_0, VR_77_0
 from mavUtils import getVCROrders,getVCRProfileInCRVROrder,getVCRProfileInCROrder,getVCRProfileInVROrder,getVCREndOrders
 from vis_vcr import vcrProfileToAgentsWithDeletion, plotVCRAgents, vcrProfileToAgentsWithColors
+from vrUtils import getFullProfileVRFromVCR
+from vcrDomain import isVCR
 
 #%%
 #
@@ -272,7 +274,7 @@ def viableControlElections(profiles:List[Profile]) -> Dict[int,List[int]]:
         pId:list(
                 map(lambda t2: t2[0],
                 filter(lambda t3: t3[1][0] and len(t3[1][1]) > 0,
-                    ((i,cc_dv_brute(np.copy(p.A),0)) for i,p in enumerate(profiles))
+                    ((i,cc_dv_brute(np.copy(p.A),pId)) for i,p in enumerate(profiles))
                 ))
             )
         for pId in range(pRange)
@@ -300,94 +302,83 @@ def getCCProfile(gEnv) -> Profile:
 #
 
 #%%
-P66 = VCRNCOP_66()
 gEnv = createGPEnv()
 ccP = getCCProfile(gEnv)
+
+# P66 = VCRNCOP_66()
 # P66_CC = viableControlElections(P66)
-# P1010 = VCRNCOP_1010()
-# P1010_CC = viableControlElections(P1010)
-P1515 = VCR_1515_01k()
-
-#%%
-start = time()
-print(compareAlgos(VR77, 7, cc_dv_vcr))
-print(time() - start)
-
-#%%
-j = 1
-p = 0
-i = P1010_CC[p][j]
-
-i = 0
-p = 0
-P = P1515
-print(P[i].A)
-print("\n", sum(P[i].A), "\n")
-# print("BRUTE : ", cc_dv_brute(np.copy(P[i].A), p=p))
-print("VCR : ", cc_dv_vcr(copy.deepcopy(P[i]), p=p, deletedVoters=[]))
-
-plotVCRAgents(vcrProfileToAgentsWithColors(P[i], colorGenerator('C', 'V', P[i], p)))
-
-#%%
-def interestingCCForNCOP66() -> Dict[int, List[int]]:
-    return {
-        0:[77,85], # koniec na j=21
-        1:[],
-        2:[],
-        3:[],       
-        4:[],
-        5:[] 
-    }
-
-#%%
-ii = 153
-pp = 5
-print("BRUTE : ", cc_dv_brute(np.copy(P66[ii].A), p=pp))
-print("VCR : ", cc_dv_vcr(copy.deepcopy(P66[ii]), p=pp, deletedVoters=[]))
-
-#%%
-AA = CR_66_0()[16].A
-Vs,Cs = getVCLists(AA)
-detectVCRProperty(AA, Cs, Vs) 
-
-#%%
-def VCR_1010_01k():
-    A = np.load("resources/output/10C10V/numpy/1010-0.npy")
-    return list(map(Profile.fromNumpy, A))
-
-#%%
-def run(start:int, end:int):
-    P1515 = VCR_1515_01k()
-    print("Start {} End {}".format(s,e))
-    startTime = time()
-    res = compareAlgos(P1515[start:end], 15, cc_dv_vcr)
-    print("Total time {}".format(time() - startTime))
-    print("Reuslt\n", res)
-
-#%%
-import sys
-
-if __name__ == "__main__":
-    s = int(sys.argv[1])
-    e = int(sys.argv[2])
-    run(s,e)  
-
-
-#%%
-def VCR_77_0():
-    A = np.load("resources/random/numpy/vcr-7C7V-0S.npy")
-    return list(map(Profile.fromNumpy, A))
-
-def VR_77_0():
-    A = np.load("resources/random/numpy/vr-7C7V-0S.npy")
-    return list(map(Profile.fromNumpy, A))
-
-#%%
-P77 = VCR_77_0()
-print(P77[0])
 
 #%%
 VR77 = VR_77_0()
-print(VR77[0])
 
 #%%
+# VR77Ordered = [p for s,p in (getFullProfileVRFromVCR(p, gEnv) for p in VR77) if s]
+VR77_CC = viableControlElections(VR77Ordered[:1000])
+
+#%%
+VR77_CC[1]
+
+#%%
+
+#%%
+start = time()
+print(compareAlgos(VR77Ordered, 7, cc_dv_vcr))
+print(time() - start)
+
+#%%
+P = VR77Ordered[:100]
+
+#%%
+j = 12
+p = 2
+i = VR77_CC[p][j]
+
+print(P[i].A)
+print("\n", sum(P[i].A), "\n")
+print("BRUTE : ", cc_dv_brute(np.copy(P[i].A), p=p))
+print("VCR : ", cc_dv_vcr(copy.deepcopy(P[i]), p=p, deletedVoters=[]))
+
+plotVCRAgents(vcrProfileToAgentsWithColors(P[i], colorGenerator('c', 'v', P[i], p)))
+
+#%%
+# def run(start:int, end:int):
+#     P1515 = VCR_1515_01k()
+#     print("Start {} End {}".format(s,e))
+#     startTime = time()
+#     res = compareAlgos(P1515[start:end], 15, cc_dv_vcr)
+#     print("Total time {}".format(time() - startTime))
+#     print("Reuslt\n", res)
+
+#     import sys
+
+#     if __name__ == "__main__":
+#         s = int(sys.argv[1])
+#         e = int(sys.argv[2])
+#         run(s,e)  
+
+
+#%%
+p1 = VR77[1]
+_,p5 = getFullProfileVRFromVCR(p1, gEnv)
+
+#%%
+Vs, Cs = getVCLists(p5.A)
+s,d = findVRPoints(p5.A, Cs, Vs, gEnv)
+d
+
+#%%
+p6 = Profile.fromILPRes(shuffleCols(p5.A, [0,1,2,3,4,5,6]), d, Cs, Vs)
+print(p6)
+
+#%%
+plotVCRAgents(vcrProfileToAgents(VR77Ordered[10]))
+
+
+#%%
+def shuffleCols(array:np.ndarray, order:list) -> np.ndarray:
+    A = np.array(array).transpose()
+    A[list(range(A.shape[0]))] = A[order]
+    return A.transpose()
+
+#%%
+isVCR(p5)
