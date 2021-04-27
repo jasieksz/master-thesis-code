@@ -293,60 +293,62 @@ def getCCProfile(gEnv) -> Profile:
     ilpStatus, ilpRes = detectVCRProperty(ccA, Cs, Vs, gEnv)
     return Profile.fromILPRes(ccA, ilpRes, Cs, Vs)
 
+#%%
+
 #
 # Notebook
 #
 
-# #%%
-# P66 = VCRNCOP_66()
-# gEnv = createGPEnv()
-# ccP = getCCProfile(gEnv)
-# # P66_CC = viableControlElections(P66)
-# # P1010 = VCRNCOP_1010()
-# # P1010_CC = viableControlElections(P1010)
-# P1515 = VCR_1515_01k()
+#%%
+P66 = VCRNCOP_66()
+gEnv = createGPEnv()
+ccP = getCCProfile(gEnv)
+# P66_CC = viableControlElections(P66)
+# P1010 = VCRNCOP_1010()
+# P1010_CC = viableControlElections(P1010)
+P1515 = VCR_1515_01k()
 
-# #%%
-# start = time()
-# compareAlgos(P1515[], 15, cc_dv_vcr)
-# print(time() - start)
+#%%
+start = time()
+print(compareAlgos(VR77, 7, cc_dv_vcr))
+print(time() - start)
 
-# #%%
-# j = 1
-# p = 0
-# i = P1010_CC[p][j]
+#%%
+j = 1
+p = 0
+i = P1010_CC[p][j]
 
-# i = 0
-# p = 0
-# P = P1515
-# print(P[i].A)
-# print("\n", sum(P[i].A), "\n")
-# # print("BRUTE : ", cc_dv_brute(np.copy(P[i].A), p=p))
-# print("VCR : ", cc_dv_vcr(copy.deepcopy(P[i]), p=p, deletedVoters=[]))
+i = 0
+p = 0
+P = P1515
+print(P[i].A)
+print("\n", sum(P[i].A), "\n")
+# print("BRUTE : ", cc_dv_brute(np.copy(P[i].A), p=p))
+print("VCR : ", cc_dv_vcr(copy.deepcopy(P[i]), p=p, deletedVoters=[]))
 
-# plotVCRAgents(vcrProfileToAgentsWithColors(P[i], colorGenerator('C', 'V', P[i], p)))
+plotVCRAgents(vcrProfileToAgentsWithColors(P[i], colorGenerator('C', 'V', P[i], p)))
 
-# #%%
-# def interestingCCForNCOP66() -> Dict[int, List[int]]:
-#     return {
-#         0:[77,85], # koniec na j=21
-#         1:[],
-#         2:[],
-#         3:[],       
-#         4:[],
-#         5:[] 
-#     }
+#%%
+def interestingCCForNCOP66() -> Dict[int, List[int]]:
+    return {
+        0:[77,85], # koniec na j=21
+        1:[],
+        2:[],
+        3:[],       
+        4:[],
+        5:[] 
+    }
 
-# #%%
-# ii = 153
-# pp = 5
-# print("BRUTE : ", cc_dv_brute(np.copy(P66[ii].A), p=pp))
-# print("VCR : ", cc_dv_vcr(copy.deepcopy(P66[ii]), p=pp, deletedVoters=[]))
+#%%
+ii = 153
+pp = 5
+print("BRUTE : ", cc_dv_brute(np.copy(P66[ii].A), p=pp))
+print("VCR : ", cc_dv_vcr(copy.deepcopy(P66[ii]), p=pp, deletedVoters=[]))
 
-# #%%
-# AA = CR_66_0()[16].A
-# Vs,Cs = getVCLists(AA)
-# detectVCRProperty(AA, Cs, Vs) 
+#%%
+AA = CR_66_0()[16].A
+Vs,Cs = getVCLists(AA)
+detectVCRProperty(AA, Cs, Vs) 
 
 #%%
 def VCR_1010_01k():
@@ -369,3 +371,23 @@ if __name__ == "__main__":
     s = int(sys.argv[1])
     e = int(sys.argv[2])
     run(s,e)  
+
+
+#%%
+def VCR_77_0():
+    A = np.load("resources/random/numpy/vcr-7C7V-0S.npy")
+    return list(map(Profile.fromNumpy, A))
+
+def VR_77_0():
+    A = np.load("resources/random/numpy/vr-7C7V-0S.npy")
+    return list(map(Profile.fromNumpy, A))
+
+#%%
+P77 = VCR_77_0()
+print(P77[0])
+
+#%%
+VR77 = VR_77_0()
+print(VR77[0])
+
+#%%

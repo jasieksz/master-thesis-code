@@ -22,14 +22,13 @@ def loadProfiles(C:int, V:int, subSet='*'):
 
     vcrNCOPProfilesDF = spark.read \
         .option("mergeSchema", "true") \
-        .parquet("resources/output/{}C{}V/{}-profiles".format(C,V,subSet))
+        .parquet("resources/random/spark/{}C{}V/vr-{}S-profiles".format(C,V,subSet))
 
-    LOGGER.warn(vcrNCOPProfilesDF.rdd.isEmpty())
     return vcrNCOPProfilesDF.rdd \
         .map(lambda r: np.array(r, dtype=float)) \
         .map(lambda r: r[2:]) \
-        # .map(lambda npProf: Profile.fromNumpy(npProf)) \
 
+#%%
 def loadStatistics(C:int, V:int, subSet='*'):
     return spark.read \
         .parquet("resources/output/{}C{}V/{}-stats".format(C,V,subSet))   
@@ -54,27 +53,10 @@ if __name__ == "__main__":
     LOGGER = log4jLogger.LogManager.getLogger(__name__)
     LOGGER.warn("=================================== START ========================================")
 
-    # subset = '*' if int(subSet) == -1 else subset
-        
-    # loadStatistics(C=int(sys.argv[1]), V=int(sys.argv[2]), subSet=sys.argv[3]).show(n=50, truncate=False)
-    # loadStatistics(C=int(sys.argv[1]), V=int(sys.argv[2]), subSet=sys.argv[3]).groupBy("key").sum().show()
-    # Ps = loadProfiles(C=int(sys.argv[1]), V=int(sys.argv[2]), subSet=sys.argv[3]).take(90)
-    # print(len(Ps))
-
-    # for profile in Ps[:10]:
-    #     print("SUM 1 : ", sum(sum(profile.A)))
-    #     print(profile.A)
-    #     for c in profile.C:
-    #         print(c)
-    #     for v in profile.V:
-    #         print(v)
-        
-    #     print("")
-
     C=int(sys.argv[1])
     V=int(sys.argv[2])
     subSet=int(sys.argv[3])
-    P = loadProfiles(C=C, V=V, subSet=subSet).take(1000)
+    P = loadProfiles(C=C, V=V, subSet=subSet).collect()
     P2 = np.array(P)
-    with open("resources/output/{}C{}V/numpy/{}{}-{}.npy".format(C,V,C,V,subSet), 'wb') as f:
+    with open("resources/random/numpy/vr-{}C{}V-{}S.npy".format(C,V,subSet), 'wb') as f:
         np.save(file=f, arr=P2, allow_pickle=False)
