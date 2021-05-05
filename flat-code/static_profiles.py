@@ -27,6 +27,10 @@ def VCRNCOP_1010():
     A = np.load("resources/output/10C10V/NCOP-profiles/ncop-1010-0.npy")
     return list(map(Profile.fromNumpy, A))
 
+def VCR_1212_0():
+    A = np.load("resources/random/numpy/vcr-12C12V-0S.npy")
+    return list(map(Profile.fromNumpy, A))
+
 def VCR_1515_01k():
     A = np.load("resources/output/15C15V/numpy/1515-0.npy")
     return list(map(Profile.fromNumpy, A))
@@ -46,3 +50,7 @@ def VR_77_0():
 # def VR_66_0():
 #     A = np.load("resources/output/6C6V/VR-profiles/vr-66-0.npy")
 #     return list(map(getVCRProfileInVROrder,map(Profile.fromNumpy, A)))
+
+def VCR_CV_S(c:int, v:int, s:int):
+    A = np.load("resources/random/numpy/vcr-{}C{}V-{}S.npy".format(c,v,s))
+    return list(map(Profile.fromNumpy, A))

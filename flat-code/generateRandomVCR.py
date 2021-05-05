@@ -1,22 +1,34 @@
-# %%
+#%%
 import numpy as np
 from numpy.random import default_rng
-from vcrDomain import isVCR, vcrPropertyRaw
-from definitions import Profile
-import sys
+from typing import Callable
+import sys 
 from time import time
 
 #%%
-def generateRandomAgents(RNG, count:int,
+from vcrDomain import isVCR, vcrPropertyRaw
+from definitions import Profile
+
+
+#%%
+def generateUniformRandomAgents(RNG, count:int,
         rMin:int, rMax:int,
         xMin:int, xMax:int) -> np.ndarray:
     positions = RNG.uniform(low=xMin, high=xMax, size=count)
     radii = RNG.uniform(low=rMin, high=rMax, size=count)
     return np.dstack((positions, radii))[0]
 
-def generateRandomVCRProfile(RNG, C:int, V:int) -> Profile:
-    candidates = generateRandomAgents(RNG, C, 0, 35, 0, 140)
-    voters = generateRandomAgents(RNG, V, 0, 20, 0, 100)
+def generateDoubleGaussRandomAgents(RNG, count:int,
+        rMin:int, rMax:int,
+        xMin:int, xMax:int) -> np.ndarray:
+    positions = RNG.uniform(low=xMin, high=xMax, size=count)
+    radii = RNG.uniform(low=rMin, high=rMax, size=count)
+    return np.dstack((positions, radii))[0]
+
+def generateRandomVCRProfile(RNG, C:int, V:int,
+     agentRandomFunction: Callable[[int,int,int,int,int], np.ndarray]) -> Profile:
+    candidates = agentRandomFunction(RNG=RNG, count=C, rMin=0, rMax=40, xMin=0, xMax=100)
+    voters = agentRandomFunction(RNG, V, 0, 20, 0, 100)
 
     A = np.zeros((V,C))
     for vI, (vX,vR) in enumerate(voters):
@@ -31,22 +43,30 @@ def generateRandomVCRProfile(RNG, C:int, V:int) -> Profile:
             A.flatten()])    
 
     return Profile.fromNumpy(npProfile)
-        
+
+
+
 
 #%%
 if __name__ == "__main__":    
     startTime = time()
-    if len(sys.argv) != 4:
-        print("args: C, V, subSet")
+    if len(sys.argv) != 6:
+        print("args: C, V, subset, count, dist")
     else:    
         C = int(sys.argv[1])
         V = int(sys.argv[2])
         subSet = int(sys.argv[3])
+        count = int(sys.argv[4])
+        distribution = sys.argv[5]     
 
-        path = "resources/random/numpy/vcr-{}C{}V-{}S.npy".format(C, V, subSet)
+        path = "resources/random/numpy/vcr-{}-{}C{}V-{}S.npy".format(distribution, C, V, subSet)
+        print("Saving to: {}".format(path))
+        agentGenerator = generateUniformRandomAgents if distribution == "uniform" else generateDoubleGaussRandomAgents if distribution == "gauss" else None
+
 
         RNG = default_rng()
-        profiles = [generateRandomVCRProfile(RNG, C, V) for i in range(100000)]
+
+        profiles = [generateRandomVCRProfile(RNG, C, V, agentGenerator) for i in range(count)]
         if not all(map(isVCR, profiles)):
             print("BOOM")
         else:

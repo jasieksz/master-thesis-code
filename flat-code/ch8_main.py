@@ -4,15 +4,18 @@ import numpy as np
 from itertools import combinations,chain
 from time import time
 import copy
+import pandas as pd
 
 from definitions import Profile, Candidate, Voter
 from vcrDetectionAlt import findCRPoints, detectVCRProperty, createGPEnv, findVRPoints
 from ch7_main import deleteVoters, deleteCandidates, getVCLists
-from static_profiles import VCRNCOP_55_1, VCRNCOP_55_2, VCRNCOP_55_3, VCRNCOP_66, VCRNCOP_1010,VCR_1515_01k, VCR_77_0, VR_77_0
+from static_profiles import VCRNCOP_55_1, VCRNCOP_55_2, VCRNCOP_55_3, VCRNCOP_66, VCRNCOP_1010,VCR_1515_01k, VCR_77_0, VR_77_0, VCR_1212_0
+from static_profiles import VCR_CV_S
 from mavUtils import getVCROrders,getVCRProfileInCRVROrder,getVCRProfileInCROrder,getVCRProfileInVROrder,getVCREndOrders
-from vis_vcr import vcrProfileToAgentsWithDeletion, plotVCRAgents, vcrProfileToAgentsWithColors
+from vis_vcr import vcrProfileToAgentsWithDeletion, plotVCRAgents, vcrProfileToAgentsWithColors, vcrProfileToAgents
 from vrUtils import getFullProfileVRFromVCR
 from vcrDomain import isVCR
+
 
 #%%
 #
@@ -303,22 +306,24 @@ def getCCProfile(gEnv) -> Profile:
 
 #%%
 gEnv = createGPEnv()
-ccP = getCCProfile(gEnv)
+# ccP = getCCProfile(gEnv)
 
 # P66 = VCRNCOP_66()
 # P66_CC = viableControlElections(P66)
 
 #%%
-VR77 = VR_77_0()
+VR77 = VR_77_0()[:100]
+VCR1212 = VCR_1212_0()
 
 #%%
-# VR77Ordered = [p for s,p in (getFullProfileVRFromVCR(p, gEnv) for p in VR77) if s]
-VR77_CC = viableControlElections(VR77Ordered[:1000])
+VR77Ordered = [p for s,p in (getFullProfileVRFromVCR(p, gEnv) for p in VR77) if s]
+VR77_CC = viableControlElections(VR77Ordered)
 
 #%%
-VR77_CC[1]
+VCR1212_CC = viableControlElections(VCR1212[:100])
 
 #%%
+VCR1212_CC[0]
 
 #%%
 start = time()
@@ -329,16 +334,20 @@ print(time() - start)
 P = VR77Ordered[:100]
 
 #%%
-j = 12
-p = 2
-i = VR77_CC[p][j]
+i
+
+#%%
+j = 1
+p = 0
+i = VCR1212_CC[p][j]
+P = VCR1212
 
 print(P[i].A)
 print("\n", sum(P[i].A), "\n")
 print("BRUTE : ", cc_dv_brute(np.copy(P[i].A), p=p))
 print("VCR : ", cc_dv_vcr(copy.deepcopy(P[i]), p=p, deletedVoters=[]))
 
-plotVCRAgents(vcrProfileToAgentsWithColors(P[i], colorGenerator('c', 'v', P[i], p)))
+plotVCRAgents(vcrProfileToAgentsWithColors(P[i], colorGenerator('C', 'V', P[i], p)))
 
 #%%
 # def run(start:int, end:int):
@@ -371,7 +380,13 @@ p6 = Profile.fromILPRes(shuffleCols(p5.A, [0,1,2,3,4,5,6]), d, Cs, Vs)
 print(p6)
 
 #%%
-plotVCRAgents(vcrProfileToAgents(VR77Ordered[10]))
+i = 1
+p = 6
+tmpP = VCR1212[i]
+print(tmpP.A)
+print("BRUTE : ", cc_dv_brute(np.copy(tmpP.A), p=p))
+print("VCR : ", cc_dv_vcr(copy.deepcopy(tmpP), p=p, deletedVoters=[]))
+plotVCRAgents(vcrProfileToAgentsWithColors(tmpP, colorGenerator('C', 'V', tmpP, p)))
 
 
 #%%
@@ -382,3 +397,65 @@ def shuffleCols(array:np.ndarray, order:list) -> np.ndarray:
 
 #%%
 isVCR(p5)
+
+#%%
+def crPlot():
+    A = np.array([1,1,1,1,0,
+                  1,0,1,0,0,
+                  1,1,0,1,0,
+                  0,0,0,0,1]).reshape(4, 5)
+    C = [Candidate("c0", 2, 2),
+         Candidate("c1", 1, 0.5),
+         Candidate("c2", 4, 1),
+         Candidate("c3", 2, 1.25),
+         Candidate("cP", 6, 0.5)]
+    V = [Voter("v0", 2, 1),
+         Voter("v1", 4, 0.5),
+         Voter("v2", 1.5, 0.2),
+         Voter("v3", 6, 0.2)]
+    return Profile(A, C, V)
+
+colors = {'cP':'gold',
+        'c0':'red', 'c1':'red', 'c2':'red', 'c3':'red',
+        'v0':'blue', 'v1':'blue', 'v2':'blue',
+        'v3':'lightblue'}
+
+plotVCRAgents(vcrProfileToAgentsWithColors(crPlot(), colors))
+
+
+#%%
+def dist(profiles):
+    cx = np.empty(0, dtype=float)
+    cr = np.empty(0, dtype=float)
+    vx = np.empty(0, dtype=float)
+    vr = np.empty(0, dtype=float)
+
+    for profile in profiles:
+        for cand in profile.C:
+            cx = np.append(cx, cand.x)
+            cr = np.append(cr, cand.r)
+        for voter in profile.V:
+            vx = np.append(vx, voter.x)
+            vr = np.append(vr, voter.r)
+    return cx,cr,vx,vr
+
+#%%
+sums = lambda profiles: [np.sum(p.A) / (p.A.shape[0] * p.A.shape[1]) for p in profiles]
+
+
+#%%
+cx,cr,vx,vr = dist(VCR1212)
+
+#%%
+s2020 = sums(VCR_CV_S(c=20, v=20, s=0))
+s1010 = sums(VCR_CV_S(c=10, v=10, s=0))
+
+#%%
+df1010 = pd.DataFrame(zip(s1010, np.ones(len(s1010))), columns=['sum', 'type'])
+df2020 = pd.DataFrame(zip(s2020, np.zeros(len(s1010))), columns=['sum', 'type'])
+df = pd.concat([df1010, df2020])
+
+#%%
+sns.displot(data=df, x='sum', hue='type')
+
+#%%
