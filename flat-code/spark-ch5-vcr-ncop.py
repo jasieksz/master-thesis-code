@@ -26,7 +26,7 @@ def run(C:int, V:int, inPath:str, outPath:str, rangeS:int=0, rangeE:int=0):
     if rangeS == 0 and rangeE == 0:
         rangeE = allProfiles.shape[0] + 1
         
-    profilesRDD = sc.parallelize(allProfiles[rangeS:rangeE], numSlices=256).cache()
+    profilesRDD = sc.parallelize(allProfiles[rangeS:rangeE], numSlices=128)#.cache()
 
     def partitionPropertyMapper(partition):
         env = createGPEnv()
@@ -44,7 +44,7 @@ def run(C:int, V:int, inPath:str, outPath:str, rangeS:int=0, rangeE:int=0):
 
     profilesWithPropertyRDD = profilesRDD \
         .map(lambda npProf: Profile.fromNumpy(npProf)) \
-        .mapPartitions(partitionPropertyMapper).cache()
+        .mapPartitions(partitionPropertyMapper)#.cache()
 
 
     propertyTypeCount = profilesWithPropertyRDD \
@@ -52,11 +52,12 @@ def run(C:int, V:int, inPath:str, outPath:str, rangeS:int=0, rangeE:int=0):
         .reduceByKey(lambda a,b: a + b) \
         .map(lambda kv: (propertyStatus[kv[0]], kv[1]))
 
-    spark.createDataFrame(propertyTypeCount, ["property", "count"]) \
-        .coalesce(1) \
-        .write \
-        .mode('append') \
-        .csv(outPath)
+    # spark.createDataFrame(propertyTypeCount, ["property", "count"]) \
+    #     .coalesce(1) \
+    #     .write \
+    #     .mode('append') \
+    #     .csv(outPath)
+
     # NPRow = Row("rangeS", "rangeE", *tuple(getNumpyColumns(C,V)))
     # schema = StructType([StructField("rangeS", IntegerType(), False),
     #                     StructField("rangeE", IntegerType(), False)] +
@@ -65,21 +66,7 @@ def run(C:int, V:int, inPath:str, outPath:str, rangeS:int=0, rangeE:int=0):
     # vcrNCOPNumpyRows = vcrNCOPProfilesRDD \
     #     .map(lambda profile: profile.asNumpy().tolist()) \
     #     .map(lambda a: NPRow(rangeS, rangeE, *tuple(a))) \
-            
-    # statistics["NCOPVCR"] = vcrNCOPProfilesRDD.count()
-    # LOGGER.warn("NCOP VCR " + str(statistics["NCOPVCR"]))
-    
-    # spark.createDataFrame(statistics.items(), ["key", "value"]) \
-    #     .repartition(1) \
-    #     .write \
-    #     .mode('append') \
-    #     .parquet("resources/output/{}C{}V/{}-stats".format(C,V,subset))
-        
-    # spark.createDataFrame(vcrNCOPNumpyRows, schema) \
-    #     .write \
-    #     .mode('append') \
-    #     .parquet("resources/output/{}C{}V/{}-profiles".format(C,V,subset)) \
-        
+
     return propertyTypeCount.collect()
 
 #%%
@@ -95,15 +82,16 @@ if __name__ == "__main__":
     C = int(sys.argv[1])
     V = int(sys.argv[2])
     subset = int(sys.argv[3])
+    distribution = sys.argv[4]
 
     propertyType = "vcr"
-    baseInPath = "resources/random/numpy/{}-{}C{}V-{}S.npy".format(propertyType, C, V, subset)
+    baseInPath = "resources/random/numpy/{}-{}-{}C{}V-{}S.npy".format(propertyType, distribution, C, V, subset)
     baseOutPath = "resources/random/spark/{}C{}V/".format(C,V)
     ncopOutPath = "ncop-{}S-profiles".format(subset)
 
     LOGGER.warn("\nLoading from : {}\nSaving to : {}\n".format(baseInPath, baseOutPath+ncopOutPath))
 
     start = time()
-    stats = run(C=C, V=V, inPath=baseInPath, outPath=baseOutPath+ncopOutPath)
+    stats = run(C=C, V=V, inPath=baseInPath, outPath=baseOutPath+ncopOutPath, rangeS=0, rangeE=10000)
     LOGGER.warn("Stats : " + str(stats))
     LOGGER.warn("TOTAL Time : " + str(time() - start))

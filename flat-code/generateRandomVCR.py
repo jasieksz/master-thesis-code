@@ -21,8 +21,14 @@ def generateUniformRandomAgents(RNG, count:int,
 def generateDoubleGaussRandomAgents(RNG, count:int,
         rMin:int, rMax:int,
         xMin:int, xMax:int) -> np.ndarray:
-    positions = RNG.uniform(low=xMin, high=xMax, size=count)
-    radii = RNG.uniform(low=rMin, high=rMax, size=count)
+    
+    majority = int(count * 0.7)
+    minority = count - majority
+
+    positionsMajor = RNG.normal(-2, 1.2, size=majority)
+    positionsMinor = RNG.normal(2, 0.8, size=minority)
+    radii = RNG.uniform(low=0, high=0.2, size=count)
+    positions = np.append(positionsMajor, positionsMinor)
     return np.dstack((positions, radii))[0]
 
 def generateRandomVCRProfile(RNG, C:int, V:int,
@@ -43,8 +49,6 @@ def generateRandomVCRProfile(RNG, C:int, V:int,
             A.flatten()])    
 
     return Profile.fromNumpy(npProfile)
-
-
 
 
 #%%
@@ -76,10 +80,29 @@ if __name__ == "__main__":
     print(time() - startTime)
             
 # #%%
-# path = "resources/input/{}C{}V/VCR-{}.npy".format(20,20,1)
-# profiles = np.load(path)
+# R = default_rng()
 
 # #%%
-# P = Profile.fromNumpy(profiles[95])
-# print(sum(sum(P.A)))
-# isVCR(P)
+# a = generateDoubleGaussRandomAgents(R, 100000, 0, 0, 0, 0)[:,0]
+import pandas as pd
+import seaborn as sns
+
+# #%%
+# R.normal(1, 0.8, size=(4))
+
+
+# #%%
+# generateDoubleGaussRandomAgents(R, 5, 0, 0, 0, 0)[:,0]
+
+#%%
+A = np.load("resources/random/numpy/vcr-{}-{}C{}V-{}S.npy".format("uniform", 10, 10, 1))
+P = [Profile.fromNumpy(a) for a in A]
+
+df = pd.DataFrame([np.sum(p.A) / 100 for p in P], columns=["x"])
+sns.displot(data=df, x="x")
+
+
+#%%
+print(Profile.fromNumpy(A[90]))
+
+#%%
