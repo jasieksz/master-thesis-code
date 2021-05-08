@@ -25,15 +25,15 @@ def generateDoubleGaussRandomAgents(RNG, count:int,
     majority = int(count * 0.7)
     minority = count - majority
 
-    positionsMajor = RNG.normal(-2, 1.2, size=majority)
-    positionsMinor = RNG.normal(2, 0.8, size=minority)
+    positionsMajor = RNG.normal(-3, 1.2, size=majority)
+    positionsMinor = RNG.normal(3, 0.8, size=minority)
     radii = RNG.uniform(low=0, high=0.2, size=count)
     positions = np.append(positionsMajor, positionsMinor)
     return np.dstack((positions, radii))[0]
 
 def generateRandomVCRProfile(RNG, C:int, V:int,
      agentRandomFunction: Callable[[int,int,int,int,int], np.ndarray]) -> Profile:
-    candidates = agentRandomFunction(RNG=RNG, count=C, rMin=0, rMax=40, xMin=0, xMax=100)
+    candidates = agentRandomFunction(RNG=RNG, count=C, rMin=0, rMax=40, xMin=-10, xMax=10)
     voters = agentRandomFunction(RNG, V, 0, 20, 0, 100)
 
     A = np.zeros((V,C))
