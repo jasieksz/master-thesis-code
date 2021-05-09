@@ -67,7 +67,7 @@ def generateRandomVCRProfile(RNG, C:int, V:int,
 
 #%%
 def generateRandomVCRProfile(RNG, C:int, V:int,
-     agentRandomFunction: Callable[[int,int,int,int,int], np.ndarray]) -> Profile:
+     agentRandomFunction) -> Profile:
     
     rConstMin = 0.7
     rConstMax = 1.2
@@ -100,52 +100,52 @@ R = default_rng()
 gEnv = createGPEnv()
 
 
-#%%
-# P = generateRandomVCRProfile(RNG=R, C=20, V=20,
-#         proportionC=0.7, proportionV=0.7,
-#         meanMajor=-1.5, meanMinor=1.5, std=0.8,
-#         radiusConst=0.7)
+# #%%
+# # P = generateRandomVCRProfile(RNG=R, C=20, V=20,
+# #         proportionC=0.7, proportionV=0.7,
+# #         meanMajor=-1.5, meanMinor=1.5, std=0.8,
+# #         radiusConst=0.7)
 
-startTime = time()
-P = generateRandomVCRProfile(R, 20, 20, generateUniformRandomAgents)
-print(time() - startTime)
+# startTime = time()
+# P = generateRandomVCRProfile(R, 20, 20, generateUniformRandomAgents)
+# print(time() - startTime)
 
-startTime = time()
-sns.heatmap(P.A, cmap=['black', 'gray'])
-plt.show()
-sns.heatmap(getVCRProfileInCRVROrder(P).A, cmap=['black', 'gray'])
-vIds, cIds = getVCLists(P.A) 
-print(time() - startTime)
+# startTime = time()
+# sns.heatmap(P.A, cmap=['black', 'gray'])
+# plt.show()
+# sns.heatmap(getVCRProfileInCRVROrder(P).A, cmap=['black', 'gray'])
+# vIds, cIds = getVCLists(P.A) 
+# print(time() - startTime)
 
-startTime = time()
-cr = detectCRProperty(P.A, cIds, vIds, gEnv)
-vr = detectVRProperty(P.A, cIds, vIds, gEnv)
-print(time() - startTime)
-startTime = time()
+# startTime = time()
+# cr = detectCRProperty(P.A, cIds, vIds, gEnv)
+# vr = detectVRProperty(P.A, cIds, vIds, gEnv)
+# print(time() - startTime)
+# startTime = time()
 
-print(cr, vr)
+# print(cr, vr)
 
-#%%
-cOrdered = [int(c.id[1:]) for c in sorted(list(P.C), key=lambda c: c.x)]
-vOrdered = [int(v.id[1:]) for v in sorted(list(P.V), key=lambda v: v.x)]
+# #%%
+# cOrdered = [int(c.id[1:]) for c in sorted(list(P.C), key=lambda c: c.x)]
+# vOrdered = [int(v.id[1:]) for v in sorted(list(P.V), key=lambda v: v.x)]
 
 
-#%%
-print()
+# #%%
+# print()
 
-#%%
-c = np.empty(0)
+# #%%
+# c = np.empty(0)
 
-#%%
-a = np.append(R.normal(3,1.8,70000),R.normal(-3,1.8,30000))
-df = pd.DataFrame(a, columns=['x'])
-sns.displot(data=df, x='x')
+# #%%
+# a = np.append(R.normal(3,1.8,70000),R.normal(-3,1.8,30000))
+# df = pd.DataFrame(a, columns=['x'])
+# sns.displot(data=df, x='x')
 
-#%%
-b = np.append(R.normal(3,1.8,700),R.normal(-3,1.8,300))
-c = np.append(b,c)
-df2 = pd.DataFrame(c, columns=['x'])
-sns.displot(data=df2, x='x')
+# #%%
+# b = np.append(R.normal(3,1.8,700),R.normal(-3,1.8,300))
+# c = np.append(b,c)
+# df2 = pd.DataFrame(c, columns=['x'])
+# sns.displot(data=df2, x='x')
 
 
 #%%
@@ -203,8 +203,8 @@ def generateVCRProfilesByRadius(RNG, count:int,
 def runnerVCRProfilesByRadius(C:int, V:int):
     RNG=default_rng()
     distribution = 'uniform'
-    count = 10
-    radiusParams={0:(0.7, 0.7), 1:(1.2, 1.2), 2:(0.7,1.2), 3:(0,2.5)}
+    count = 1000
+    radiusParams={0:(0.7, 0.7), 1:(1.2, 1.2), 2:(0.7,1.2), 3:(0,3)}
 
     path = "resources/random/numpy/vcr-{}-{}R-{}C{}V.npy"
 
@@ -234,13 +234,6 @@ ax2.set_title("VCR Ordered Approval Matrix")
 ax2.set_xlabel("candidates (reindexed)")
 ax2.set_ylabel("voters (reindexed)")
 
-#%%
-d0 = generateVCRProfileByRadius(RNG=R, C=4, V=4, radiusParams={0:(1,1), 1:(0,4)})
-d1 = generateVCRProfileByRadius(RNG=R, C=4, V=4, radiusParams={0:(1,1), 1:(0,4)})
-
-
-#%%
-d = generateVCRProfilesByRadius(RNG=R, count=10, C=20, V=20, radiusParams={0:(1,1), 1:(0,4)})
 
 #%%
 i = 2
@@ -265,10 +258,47 @@ P44_3 = np.load('resources/random/numpy/vcr-uniform-3R-30C30V.npy')
 print(Profile.fromNumpy(P44_3[0]))
 
 #%%
-i = 2
+i = 100
 fig, (ax1, ax2) = plt.subplots(2,2, figsize=(14,12))
 sns.heatmap(getVCRProfileInCRVROrder(Profile.fromNumpy(P44_0[i])).A, cmap=['black', 'gray'], ax=ax1[0])
 sns.heatmap(getVCRProfileInCRVROrder(Profile.fromNumpy(P44_1[i])).A, cmap=['black', 'gray'], ax=ax1[1])
 sns.heatmap(getVCRProfileInCRVROrder(Profile.fromNumpy(P44_2[i])).A, cmap=['black', 'gray'], ax=ax2[0])
 sns.heatmap(getVCRProfileInCRVROrder(Profile.fromNumpy(P44_3[i])).A, cmap=['black', 'gray'], ax=ax2[1])
+ax1[0].set_title("R=0.7")
+ax1[0].set_xlabel("candidates")
+ax1[0].set_ylabel("voters")
 
+ax1[1].set_title("R=1.2")
+ax1[1].set_xlabel("candidates")
+ax1[1].set_ylabel("voters")
+
+ax2[0].set_title("R=Uniform<0.7,1.2>")
+ax2[0].set_xlabel("candidates")
+ax2[0].set_ylabel("voters")
+
+ax2[1].set_title("R=Uniform<0,3>")
+ax2[1].set_xlabel("candidates")
+ax2[1].set_ylabel("voters")
+
+#%%
+i = 100
+fig, (ax1, ax2) = plt.subplots(2,2, figsize=(14,12))
+sns.heatmap((Profile.fromNumpy(P44_0[i])).A, cmap=['black', 'gray'], ax=ax1[0])
+sns.heatmap((Profile.fromNumpy(P44_1[i])).A, cmap=['black', 'gray'], ax=ax1[1])
+sns.heatmap((Profile.fromNumpy(P44_2[i])).A, cmap=['black', 'gray'], ax=ax2[0])
+sns.heatmap((Profile.fromNumpy(P44_3[i])).A, cmap=['black', 'gray'], ax=ax2[1])
+ax1[0].set_title("R=0.7")
+ax1[0].set_xlabel("candidates")
+ax1[0].set_ylabel("voters")
+
+ax1[1].set_title("R=1.2")
+ax1[1].set_xlabel("candidates")
+ax1[1].set_ylabel("voters")
+
+ax2[0].set_title("R=Uniform<0.7,1.2>")
+ax2[0].set_xlabel("candidates")
+ax2[0].set_ylabel("voters")
+
+ax2[1].set_title("R=Uniform<0,3>")
+ax2[1].set_xlabel("candidates")
+ax2[1].set_ylabel("voters")

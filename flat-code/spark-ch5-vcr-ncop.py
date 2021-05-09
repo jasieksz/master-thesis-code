@@ -16,6 +16,14 @@ from utils import getNumpyColumns
 
 
 #%%
+def profileAsNumpy(profile): # [ C, V, c1x, c1r, ..., cnx, cnr, v1x, v1r, ..., vmx, vmr, A00, ..., Anm ]
+    return np.concatenate([
+        np.array(profile.A.shape),
+        np.array([(c.x, c.r) for c in profile.C]).flatten(),
+        np.array([(v.x, v.r) for v in profile.V]).flatten(),
+        profile.A.flatten()])    
+
+#%%
 def run(C:int, V:int, inPath:str, outPath:str, rangeS:int=0, rangeE:int=0):
     propertyStatus = {0:"ncop", 1:"cr", 2:"vr", 3:"cop"}
     statistics = {}
@@ -44,7 +52,7 @@ def run(C:int, V:int, inPath:str, outPath:str, rangeS:int=0, rangeE:int=0):
 
     profilesWithPropertyRDD = profilesRDD \
         .map(lambda npProf: Profile.fromNumpy(npProf)) \
-        .mapPartitions(partitionPropertyMapper)#.cache()
+        .mapPartitions(partitionPropertyMapper).cache()
 
 
     propertyTypeCount = profilesWithPropertyRDD \
@@ -52,22 +60,45 @@ def run(C:int, V:int, inPath:str, outPath:str, rangeS:int=0, rangeE:int=0):
         .reduceByKey(lambda a,b: a + b) \
         .map(lambda kv: (propertyStatus[kv[0]], kv[1]))
 
-    # spark.createDataFrame(propertyTypeCount, ["property", "count"]) \
-    #     .coalesce(1) \
-    #     .write \
-    #     .mode('append') \
-    #     .csv(outPath)
+    spark.createDataFrame(propertyTypeCount, ["property", "count"]) \
+        .coalesce(1) \
+        .write \
+        .mode('append') \
+        .option("header","true") \
+        .csv(outPath+'-stats')
 
-    # NPRow = Row("rangeS", "rangeE", *tuple(getNumpyColumns(C,V)))
-    # schema = StructType([StructField("rangeS", IntegerType(), False),
-    #                     StructField("rangeE", IntegerType(), False)] +
-    #                     [StructField(n, FloatType(), False) for n in getNumpyColumns(C, V)])
+    NPRow = Row("rangeS", "rangeE", *tuple(getNumpyColumns(C,V)))
+    schema = StructType([StructField("rangeS", IntegerType(), False),
+                        StructField("rangeE", IntegerType(), False)] +
+                        [StructField(n, FloatType(), False) for n in getNumpyColumns(C, V)])
     
-    # vcrNCOPNumpyRows = vcrNCOPProfilesRDD \
-    #     .map(lambda profile: profile.asNumpy().tolist()) \
-    #     .map(lambda a: NPRow(rangeS, rangeE, *tuple(a))) \
+    # t3: (status, 1, profile), status=0 -> ncop
+    ncopNumpyRows = profilesWithPropertyRDD \
+        .filter(lambda t3: t3[0] == 0) \
+        .map(lambda t3: t3[2]) \
+        .map(lambda profile: profileAsNumpy(profile).tolist()) \
+        .map(lambda profileArr: NPRow(rangeS, rangeE, *tuple(profileArr))) \
 
-    return propertyTypeCount.collect()
+
+    spark.createDataFrame(ncopNumpyRows, schema) \
+        .write \
+        .mode('append') \
+        .parquet(outPath+'-profiles')
+
+
+def readStatistics(inPath:str):
+    return spark.read \
+        .option("inferSchema", "true") \
+        .option("header", "true") \
+        .csv(inPath) \
+        .collect()
+
+def readNCOPProfiles(inPath:str, takeCount:int):
+    return spark.read \
+        .option("inferSchema", "true") \
+        .parquet(inPath) \
+        .rdd.map(lambda a: Profile.fromNumpy(np.array(a[2:]))) \
+        .take(takeCount)
 
 #%%
 if __name__ == "__main__":
@@ -81,17 +112,18 @@ if __name__ == "__main__":
     
     C = int(sys.argv[1])
     V = int(sys.argv[2])
-    subset = int(sys.argv[3])
+    R = int(sys.argv[3])
     distribution = sys.argv[4]
 
     propertyType = "vcr"
-    baseInPath = "resources/random/numpy/{}-{}-{}C{}V-{}S.npy".format(propertyType, distribution, C, V, subset)
+    baseInPath = "resources/random/numpy/{}-{}-{}R-{}C{}V.npy".format(propertyType, distribution, R, C, V)
     baseOutPath = "resources/random/spark/{}C{}V/".format(C,V)
-    ncopOutPath = "ncop-{}S-profiles".format(subset)
+    ncopOutPath = "ncop-{}-{}R".format(distribution, R)
 
     LOGGER.warn("\nLoading from : {}\nSaving to : {}\n".format(baseInPath, baseOutPath+ncopOutPath))
 
     start = time()
-    stats = run(C=C, V=V, inPath=baseInPath, outPath=baseOutPath+ncopOutPath, rangeS=0, rangeE=10000)
-    LOGGER.warn("Stats : " + str(stats))
+    run(C=C, V=V, inPath=baseInPath, outPath=baseOutPath+ncopOutPath, rangeS=0, rangeE=0)
     LOGGER.warn("TOTAL Time : " + str(time() - start))
+    LOGGER.warn("Statistics : {}".format(readStatistics(baseOutPath+ncopOutPath+'-stats')))
+
