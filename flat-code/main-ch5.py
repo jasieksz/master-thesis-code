@@ -494,3 +494,36 @@ ax2[1].set_ylabel("voters")
 sT = time()
 print(detectVRProperty(Profile.fromNumpy(P44_3[6]).A, cIds, vIds, gEnv))
 time() - sT
+
+
+#%%
+import os
+
+#%%
+radiusParams={0:"0.7", 1:"1.2", 2:"<0.7,1.2>", 3:"<0,3>"}
+
+def f():
+    for dist in ['uniform', '2gauss', 'gaussuniform', 'uniformgauss']:
+        for r in range(4):
+            path = [e for e in os.listdir("resources/random/spark/20C20V/ncop-{}-{}R-stats/".format(dist, r)) if e[-3:] == "csv"][0]
+            df = pd.read_csv("resources/random/spark/20C20V/ncop-{}-{}R-stats/{}".format(dist, r, path))
+            dist2 = dist
+            if dist == 'gaussuniform':
+                dist2 = 'gauss C\n uniform V'
+            if dist == 'uniformgauss':
+                dist2 = 'uniform C\n gauss V'
+            df['distribution'] = dist2
+            df['R'] = radiusParams[r]
+            yield df
+
+#%%
+data = pd.concat(f())
+
+#%%
+
+g = sns.catplot(data=data, x='distribution', y='count',
+    hue='property', col='R', col_wrap=2,
+    orient="v", kind='bar', sharex=False)
+
+g.fig.subplots_adjust(top=0.9)
+g.fig.suptitle('20 Candidates 20 Voters')
