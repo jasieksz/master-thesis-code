@@ -110,3 +110,14 @@ def plotVCRAgents(agents:List[Agent]) -> None:
 def run():
     plotVCRAgents(vcrProfileToAgents(P66[10]))
     plotVCRAgents(vcrProfileToAgentsWithDeletion(P66[99], ['C0'], ['V0','V2']))
+
+
+#%%
+df = pd.read_csv('resources/random/spark/30C30V/stats-merged.csv')
+df
+
+#%%
+sns.catplot(data=df, x='distribution', y='count',
+    hue='property', col='R', col_wrap=2,
+    orient="v", kind='bar', sharex=False)
+

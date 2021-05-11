@@ -336,14 +336,75 @@ def runnerVCRProfilesByRadiusGaussUniform(C:int, V:int):
 
 ##################################################
 ##################################################
+##################################################
 #%%
-runnerVCRProfilesByRadius(30,30)
+def generateVCRProfileByRadiusUniformGauss(RNG,
+    C:int, V:int,
+    radiusParams: Dict[int,Tuple[float,float]]) -> Profile:
+
+    resultProfiles = {k:list() for k in radiusParams.keys()}
+
+    xMin = -10
+    xMax = 10
+    cPositions = RNG.uniform(low=xMin, high=xMax, size=V)
+
+    majorityV = int(C * 0.7)
+    minorityV = V - majorityV
+    positionsVMajor = RNG.normal(-3, 1.8, size=majorityV)
+    positionsVMinor = RNG.normal(3, 1.8, size=minorityV)
+    vPositions = np.append(positionsVMajor, positionsVMinor)
+
+    for key, (rMin,rMax) in radiusParams.items():
+        radiiC = RNG.uniform(low=rMin, high=rMax, size=C)
+        radiiV = RNG.uniform(low=rMin, high=rMax, size=V)
+        candidates = np.dstack((cPositions, radiiC))[0]
+        voters = np.dstack((vPositions, radiiV))[0]
+        profile = npProfileFromVotersAndCandidates(voters, candidates)
+        resultProfiles[key].append(profile)
+    
+    return resultProfiles
+
+def generateVCRProfilesByRadiusUniformGauss(RNG, count:int,
+    C:int, V:int,
+    radiusParams: Dict[int,Tuple[float,float]]) -> List[Profile]:
+    resultProfiles = {k:list() for k in radiusParams.keys()}
+
+    for i in range(count):
+        profiles = generateVCRProfileByRadiusUniformGauss(RNG=R, C=C, V=V, radiusParams=radiusParams)
+        resultProfiles = mergeDictLists(resultProfiles, profiles)
+
+    return resultProfiles
+
+def runnerVCRProfilesByRadiusUniformGauss(C:int, V:int):
+    RNG=default_rng()
+    distribution = 'uniformgauss'
+    count = 1000
+    radiusParams={0:(0.7, 0.7), 1:(1.2, 1.2), 2:(0.7,1.2), 3:(0,3)}
+
+    path = "resources/random/numpy/vcr-{}-{}R-{}C{}V.npy"
+
+    profilesByR = generateVCRProfilesByRadiusUniformGauss(RNG, count, C, V, radiusParams)
+
+    for rParam, profiles in profilesByR.items():
+        saveLoc = path.format(distribution, rParam, C, V)
+        print("Saving to : {}".format(saveLoc))
+        with open(saveLoc, 'wb') as f:
+            np.save(file=f, arr=profiles, allow_pickle=False)
+
+##################################################
+##################################################
+##################################################
+#%%
+runnerVCRProfilesByRadius(100,100)
 
 #%%
-runnerVCRProfilesByRadius2Gauss(30,30)
+runnerVCRProfilesByRadius2Gauss(20,20)
 
 #%%
-runnerVCRProfilesByRadiusGaussUniform(30,30)
+runnerVCRProfilesByRadiusGaussUniform(20,20)
+
+#%%
+runnerVCRProfilesByRadiusUniformGauss(20,20)
 
 #%%
 fig, (ax1, ax2) = plt.subplots(1,2, figsize=(14,6))
@@ -373,16 +434,16 @@ ax2.set_xlabel("candidates (reindexed)")
 ax2.set_ylabel("voters (reindexed)")
 
 #%%
-P44_0 = np.load('resources/random/numpy/vcr-gaussuniform-0R-30C30V.npy')
-P44_1 = np.load('resources/random/numpy/vcr-gaussuniform-1R-30C30V.npy')
-P44_2 = np.load('resources/random/numpy/vcr-gaussuniform-2R-30C30V.npy')
-P44_3 = np.load('resources/random/numpy/vcr-gaussuniform-3R-30C30V.npy')
+P44_0 = np.load('resources/random/numpy/vcr-uniform-0R-100C100V.npy')
+P44_1 = np.load('resources/random/numpy/vcr-uniform-1R-100C100V.npy')
+P44_2 = np.load('resources/random/numpy/vcr-uniform-2R-100C100V.npy')
+P44_3 = np.load('resources/random/numpy/vcr-uniform-3R-100C100V.npy')
 
 #%%
 print(Profile.fromNumpy(P44_3[0]))
 
 #%%
-i = 100
+i = 6
 fig, (ax1, ax2) = plt.subplots(2,2, figsize=(14,12))
 sns.heatmap(getVCRProfileInCRVROrder(Profile.fromNumpy(P44_0[i])).A, cmap=['black', 'gray'], ax=ax1[0])
 sns.heatmap(getVCRProfileInCRVROrder(Profile.fromNumpy(P44_1[i])).A, cmap=['black', 'gray'], ax=ax1[1])
@@ -405,7 +466,7 @@ ax2[1].set_xlabel("candidates")
 ax2[1].set_ylabel("voters")
 
 #%%
-i = 100
+i = 6
 fig, (ax1, ax2) = plt.subplots(2,2, figsize=(14,12))
 sns.heatmap((Profile.fromNumpy(P44_0[i])).A, cmap=['black', 'gray'], ax=ax1[0])
 sns.heatmap((Profile.fromNumpy(P44_1[i])).A, cmap=['black', 'gray'], ax=ax1[1])
@@ -429,5 +490,7 @@ ax2[1].set_ylabel("voters")
 
 
 #%%
-# vIds, cIds = getVCLists(Profile.fromNumpy(P44_3[0]).A) 
-detectVRProperty(Profile.fromNumpy(P44_3[0]).A, cIds, vIds, gEnv) 
+# vIds, cIds = getVCLists(Profile.fromNumpy(P44_3[6]).A) 
+sT = time()
+print(detectVRProperty(Profile.fromNumpy(P44_3[6]).A, cIds, vIds, gEnv))
+time() - sT
