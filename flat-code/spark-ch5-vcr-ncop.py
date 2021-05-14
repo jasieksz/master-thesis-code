@@ -24,7 +24,7 @@ def profileAsNumpy(profile): # [ C, V, c1x, c1r, ..., cnx, cnr, v1x, v1r, ..., v
         profile.A.flatten()])    
 
 #%%
-def run(C:int, V:int, inPath:str, outPath:str, rangeS:int=0, rangeE:int=0):
+def run(C:int, V:int, inPath:str, outPath:str, rangeS:int=0, rangeE:int=0, R:int=None, distribution:str=None):
     propertyStatus = {0:"ncop", 1:"cr", 2:"vr", 3:"cop"}
     statistics = {}
     candidatesIds = ['C' + str(i) for i in range(C)]
@@ -58,9 +58,10 @@ def run(C:int, V:int, inPath:str, outPath:str, rangeS:int=0, rangeE:int=0):
     propertyTypeCount = profilesWithPropertyRDD \
         .map(lambda t3: (t3[0], t3[1])) \
         .reduceByKey(lambda a,b: a + b) \
-        .map(lambda kv: (propertyStatus[kv[0]], kv[1]))
+        .map(lambda kv: (propertyStatus[kv[0]], kv[1])) \
+        .map(lambda t2: (t2[0], t2[1], distribution, R))
 
-    spark.createDataFrame(propertyTypeCount, ["property", "count"]) \
+    spark.createDataFrame(propertyTypeCount, ["property", "count", "distribution", "R"]) \
         .coalesce(1) \
         .write \
         .mode('append') \
@@ -78,7 +79,6 @@ def run(C:int, V:int, inPath:str, outPath:str, rangeS:int=0, rangeE:int=0):
         .map(lambda t3: t3[2]) \
         .map(lambda profile: profileAsNumpy(profile).tolist()) \
         .map(lambda profileArr: NPRow(rangeS, rangeE, *tuple(profileArr))) \
-
 
     spark.createDataFrame(ncopNumpyRows, schema) \
         .write \
@@ -123,7 +123,7 @@ if __name__ == "__main__":
     LOGGER.warn("\nLoading from : {}\nSaving to : {}\n".format(baseInPath, baseOutPath+ncopOutPath))
 
     start = time()
-    run(C=C, V=V, inPath=baseInPath, outPath=baseOutPath+ncopOutPath, rangeS=0, rangeE=0)
+    run(C=C, V=V, inPath=baseInPath, outPath=baseOutPath+ncopOutPath, rangeS=0, rangeE=0, R=R, distribution=distribution)
     LOGGER.warn("TOTAL Time : " + str(time() - start))
     LOGGER.warn("Statistics : {}".format(readStatistics(baseOutPath+ncopOutPath+'-stats')))
 

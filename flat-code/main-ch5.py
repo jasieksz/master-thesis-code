@@ -320,29 +320,16 @@ R = default_rng()
 gEnv = createGPEnv()
 
 #%%
-runnerVCRProfilesByRadiusUniform(20,20)
+runnerVCRProfilesByRadiusUniform(40,40)
 
 #%%
-runnerVCRProfilesByRadius2Gauss(20,20)
+runnerVCRProfilesByRadius2Gauss(40,40)
 
 #%%
-runnerVCRProfilesByRadiusGaussUniform(20,20)
+runnerVCRProfilesByRadiusGaussUniform(40,40)
 
 #%%
-runnerVCRProfilesByRadiusUniformGauss(20,20)
-
-#%%
-fig, (ax1, ax2) = plt.subplots(1,2, figsize=(14,6))
-d = generateVCRProfilesByRadius(RNG=R, C=20, V=20, radiusParams={0:(1,1), 1:(0,4)})
-sns.heatmap((d[1][0].A), cmap=['black', 'gray'], ax=ax1)
-sns.heatmap((getVCRProfileInCRVROrder(d[1][0]).A), cmap=['black', 'gray'], ax=ax2)
-ax1.set_title("Initial Approval Matrix")
-ax1.set_xlabel("candidates")
-ax1.set_ylabel("voters")
-
-ax2.set_title("VCR Ordered Approval Matrix")
-ax2.set_xlabel("candidates (reindexed)")
-ax2.set_ylabel("voters (reindexed)")
+runnerVCRProfilesByRadiusUniformGauss(40,40)
 
 
 #%%
@@ -434,7 +421,7 @@ radiusParams={
 
 
 def f():
-    for dist in ['2gauss']:
+    for dist in ['uniform','2gauss','uniformgauss','gaussuniform']:
         for r in range(4,9):
             path = [e for e in os.listdir("resources/random/spark/20C20V/ncop-{}-{}R-stats/".format(dist, r)) if e[-3:] == "csv"][0]
             df = pd.read_csv("resources/random/spark/20C20V/ncop-{}-{}R-stats/{}".format(dist, r, path))
@@ -454,9 +441,11 @@ data = pd.concat(f())
 
 g = sns.catplot(data=data, x='distribution', y='count',
     hue='property', col='R', col_wrap=3,
-    orient="v", kind='bar', sharex=False)
+    orient="v", kind='bar', sharex=False, sharey=False)
 
 g.fig.subplots_adjust(top=0.9)
+for ax in g.axes:
+    ax.set_xlabel('')
 g.fig.suptitle('20 Candidates 20 Voters')
 
 #%%
