@@ -458,3 +458,78 @@ g = sns.catplot(data=data, x='property', y='count',
 
 g.fig.subplots_adjust(top=0.9)
 g.fig.suptitle('Small Size Elections - All Combinations')
+
+#%%
+radiusParams={
+        4:(partial(gaussRadiusWrapper, R, 1.5, 0.5), partial(gaussRadiusWrapper, R, 1.5, 0.5)),
+        5:(partial(uniformRadiusWrapper, R, 0.7, 1.2), partial(gaussRadiusWrapper, R, 1.5, 0.5)),
+        6:(partial(gaussRadiusWrapper, R, 1.5, 0.5), partial(uniformRadiusWrapper, R, 0.7, 1.2)),
+        7:(partial(uniformRadiusWrapper, R, 0.7, 1.2), partial(uniformRadiusWrapper, R, 0.7, 1.2)),
+        8:(partial(uniformRadiusWrapper, R, 0, 3), partial(uniformRadiusWrapper, R, 0, 3)),
+}
+
+C = 20
+V = 20
+profiles = {}
+
+#%%
+profiles = mergeDictLists(profiles, generateVCRProfileByRadiusUniformGauss(R, C, V, radiusParams))
+
+#%%
+fig, ax = plt.subplots(4,5, figsize=(15,12))
+
+sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[4][0]))).A, cmap=['black', 'gray'], ax=ax[0][0])
+sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[5][0]))).A, cmap=['black', 'gray'], ax=ax[0][1])
+sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[6][0]))).A, cmap=['black', 'gray'], ax=ax[0][2])
+sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[7][0]))).A, cmap=['black', 'gray'], ax=ax[0][3])
+sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[8][0]))).A, cmap=['black', 'gray'], ax=ax[0][4])
+
+sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[4][1]))).A, cmap=['black', 'gray'], ax=ax[1][0])
+sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[5][1]))).A, cmap=['black', 'gray'], ax=ax[1][1])
+sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[6][1]))).A, cmap=['black', 'gray'], ax=ax[1][2])
+sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[7][1]))).A, cmap=['black', 'gray'], ax=ax[1][3])
+sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[8][1]))).A, cmap=['black', 'gray'], ax=ax[1][4])
+
+sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[4][2]))).A, cmap=['black', 'gray'], ax=ax[2][0])
+sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[5][2]))).A, cmap=['black', 'gray'], ax=ax[2][1])
+sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[6][2]))).A, cmap=['black', 'gray'], ax=ax[2][2])
+sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[7][2]))).A, cmap=['black', 'gray'], ax=ax[2][3])
+sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[8][2]))).A, cmap=['black', 'gray'], ax=ax[2][4])
+
+sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[4][3]))).A, cmap=['black', 'gray'], ax=ax[3][0])
+sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[5][3]))).A, cmap=['black', 'gray'], ax=ax[3][1])
+sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[6][3]))).A, cmap=['black', 'gray'], ax=ax[3][2])
+sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[7][3]))).A, cmap=['black', 'gray'], ax=ax[3][3])
+sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[8][3]))).A, cmap=['black', 'gray'], ax=ax[3][4])
+
+# ax1[0].set_title("R=0.7")
+# ax1[0].set_xlabel("candidates")
+# ax1[0].set_ylabel("voters")
+
+# ax1[1].set_title("R=1.2")
+# ax1[1].set_xlabel("candidates")
+# ax1[1].set_ylabel("voters")
+
+# ax2[0].set_title("R=Uniform<0.7,1.2>")
+# ax2[0].set_xlabel("candidates")
+# ax2[0].set_ylabel("voters")
+
+# ax2[1].set_title("R=Uniform<0,3>")
+# ax2[1].set_xlabel("candidates")
+# ax2[1].set_ylabel("voters")
+
+
+#%%
+fig, ax = plt.subplots(2,5, figsize=(15,6))
+
+sns.heatmap((Profile.fromNumpy(profiles[4][0])).A, cmap=['black', 'gray'], ax=ax[0][0])
+sns.heatmap((Profile.fromNumpy(profiles[5][0])).A, cmap=['black', 'gray'], ax=ax[0][1])
+sns.heatmap((Profile.fromNumpy(profiles[6][0])).A, cmap=['black', 'gray'], ax=ax[0][2])
+sns.heatmap((Profile.fromNumpy(profiles[7][0])).A, cmap=['black', 'gray'], ax=ax[0][3])
+sns.heatmap((Profile.fromNumpy(profiles[8][0])).A, cmap=['black', 'gray'], ax=ax[0][4])
+
+sns.heatmap((Profile.fromNumpy(profiles[4][1])).A, cmap=['black', 'gray'], ax=ax[1][0])
+sns.heatmap((Profile.fromNumpy(profiles[5][1])).A, cmap=['black', 'gray'], ax=ax[1][1])
+sns.heatmap((Profile.fromNumpy(profiles[6][1])).A, cmap=['black', 'gray'], ax=ax[1][2])
+sns.heatmap((Profile.fromNumpy(profiles[7][1])).A, cmap=['black', 'gray'], ax=ax[1][3])
+sns.heatmap((Profile.fromNumpy(profiles[8][1])).A, cmap=['black', 'gray'], ax=ax[1][4])
