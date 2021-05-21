@@ -323,7 +323,7 @@ gEnv = createGPEnv()
 runnerVCRProfilesByRadiusUniform(40,40)
 
 #%%
-runnerVCRProfilesByRadius2Gauss(40,40)
+runnerVCRProfilesByRadius2Gauss(10,10)
 
 #%%
 runnerVCRProfilesByRadiusGaussUniform(40,40)

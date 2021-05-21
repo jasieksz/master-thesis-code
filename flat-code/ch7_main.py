@@ -1,12 +1,17 @@
 #%%
 from definitions import Profile, Candidate, Voter
 from vcrDetectionAlt import detectVCRProperty, detectCRProperty, detectVRProperty, createGPEnv
-from mavUtils import getVCRProfileInCROrder, getVCRProfileInVROrder
+from vcrDetectionAlt import findCRPoints, findVRPoints
+from mavUtils import getVCRProfileInCROrder, getVCRProfileInVROrder, getVCRProfileInCRVROrder
 
+from matplotlib import pyplot as plt
+import seaborn as sns
+import pandas as pd
 import numpy as np
 from itertools import combinations
 from time import time
 from typing import List, Tuple, NamedTuple
+from functools import partial
 
 
 #%%
@@ -30,30 +35,67 @@ def detectVRPropertyWrapper(gEnv, A, C, V):
     return detectVRProperty(A, C, V, gEnv)
 
 class deletionSearchResults(NamedTuple):
-    status:bool
+    status:int
     k:int
     combination:List[int]
 
+
+def fullDetectProperty(A:np.ndarray, env) -> int:
+    Vs, Cs = getVCLists(A)
+    crResult = detectCRProperty(A=A, C=Cs, V=Vs, env=env)
+    vrResult = detectVRProperty(A=A, C=Cs, V=Vs, env=env)
+    status = 0
+    if (crResult and not vrResult):
+        status = 1
+    elif (not crResult and vrResult):
+        status = 2
+    elif (crResult and vrResult):
+        status = 3
+    return status
+
 # axis=0 -> deleteVoters | axis=1 -> deleteCandidates
-def combinationDeletionSearch(A:np.ndarray, deleteAxis:int, detectPartialFunction) -> deletionSearchResults:
+def combinationDeletionSearch(A:np.ndarray, deleteAxis:int, gEnv) -> deletionSearchResults:
     deleteFunction = deleteCandidates if deleteAxis == 1 else deleteVoters
-    crProfiles = [] 
     found = False
     k = 1
-    while not found:
+    results = []
+    while not found and k < 5:
         for combination in map(list, combinations(range(A.shape[deleteAxis]), k)):
             tmpA = deleteFunction(A, combination)
-            Vs, Cs = getVCLists(tmpA)
-            # if detectCRProperty(tmpA, Cs, Vs, gEnv):
-            if detectPartialFunction(tmpA, Cs, Vs):
-                return deletionSearchResults(True, k, combination)
+            propertyStatus = fullDetectProperty(tmpA, gEnv)
+            if propertyStatus != 0:
+                found = True
+                results.append(deletionSearchResults(propertyStatus, k, combination))
         k += 1
-    return deletionSearchResults(False, k, [])
+    return results if found else deletionSearchResults(0, k, [])
 
-def exampleRun():
-    As = np.load("resources/output/10C10V/NCOP-profiles/ncop-1010-0.npy")
-    P1010 = list(map(Profile.fromNumpy, As))
-    gEnv = createGPEnv()
-    detectPF = partial(detectCRPropertyWrapper, gEnv)
-    a = P1010[19].A
-    combinationDeletionSearch(P1010[11].A, 1, detectPF)
+def exampleRun(profile):
+    env = createGPEnv()
+
+
+def NCOP_1010():
+    return list(map(Profile.fromNumpy, np.load("resources/random/numpy/ncop-2gauss-8R-10C10V-0S-100E.npy")))
+
+def prefHeatmap(profile):
+    plt.figure(figsize=(6,5))
+    sns.heatmap((getVCRProfileInCRVROrder(profile)).A, cmap=['black', 'gray'])
+    plt.show()
+
+#############################################
+#############################################
+# NOTEBOOK
+#%%
+P1010 = NCOP_1010()
+env = createGPEnv()
+
+#%%
+# prefHeatmap(P1010[5])
+res = combinationDeletionSearch(P1010[5].A, 1, env)
+res
+
+#%%
+tmpA = deleteCandidates(np.copy(P1010[5].A), [6])
+vs,cs = getVCLists(tmpA)
+_,res = findCRPoints(tmpA, cs, vs, env)
+tmpP = Profile.fromILPRes(tmpA, res, cs, vs)
+prefHeatmap(tmpP)

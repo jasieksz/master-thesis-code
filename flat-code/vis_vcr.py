@@ -9,7 +9,7 @@ import seaborn as sns
 import pandas as pd
 from matplotlib import cm
 from matplotlib import ticker
-sns.set_style("darkgrid", {"axes.facecolor": ".8"})
+# sns.set_style("whitegrid", {"axes.facecolor": "1"})
 
 from typing import NamedTuple, List, Dict
 from definitions import Profile
@@ -107,17 +107,159 @@ def plotVCRAgents(agents:List[Agent]) -> None:
     plt.show()
 
 #%%
-def run():
-    plotVCRAgents(vcrProfileToAgents(P66[10]))
-    plotVCRAgents(vcrProfileToAgentsWithDeletion(P66[99], ['C0'], ['V0','V2']))
+def crPlot():
+    A = np.array([1,1,1,1,0,
+                  1,0,1,0,0,
+                  1,1,0,1,0,
+                  0,0,0,0,1]).reshape(4, 5)
+    C = [Candidate("c0", 2, 2),
+         Candidate("c1", 1, 0.5),
+         Candidate("c2", 4, 1),
+         Candidate("c3", 2, 1.25),
+         Candidate("cP", 6, 0.5)]
+    V = [Voter("v0", 2, 1),
+         Voter("v1", 4, 0.5),
+         Voter("v2", 1.5, 0.2),
+         Voter("v3", 6, 0.2)]
+    return Profile(A, C, V)
+
+
 
 
 #%%
-df = pd.read_csv('resources/random/spark/30C30V/stats-merged.csv')
-df
+colors = {'cP':'gold',
+            'c0':'red', 'c1':'red', 'c2':'red', 'c3':'red',
+            'v0':'blue', 'v1':'blue', 'v2':'blue',
+            'v3':'lightblue'}
+
+plotVCRAgents(vcrProfileToAgentsWithColors(crPlot(), colors))
+
 
 #%%
-sns.catplot(data=df, x='distribution', y='count',
-    hue='property', col='R', col_wrap=2,
-    orient="v", kind='bar', sharex=False)
+def drawAgentLine(xStart, xEnd, y, label, color):
+    p1 = plt.hlines(y=y,
+                    xmin=xStart,
+                    xmax=xEnd,
+                    label=label,
+                    color=color,
+                    linewidth=3)
 
+    plt.text(x=xStart + (xEnd - xStart)//2, y=y+0.03, s=label, fontdict={'size':9})
+
+    yOff = 0.025
+    p2 = plt.vlines(x=xStart,
+                    ymin=y - yOff,
+                    ymax=y + yOff, 
+                    color=color,
+                    linewidth=3)
+
+    p3 = plt.vlines(x=xEnd,
+                    ymin=y - yOff,
+                    ymax=y + yOff, 
+                    color=color,
+                    linewidth=3)
+
+#%%
+def stage1():
+    plt.figure(figsize=(4,3))
+    plt.title("Stage 1 - P wins")
+
+    drawAgentLine(6, 8, 1, "P", "black")
+    drawAgentLine(6.5, 7.5, 0.85, "v1", "black")
+
+
+    drawAgentLine(1, 4, 1, "c1", "black")
+    plt.grid(b=True, axis='both')
+    plt.xlim([0,10])
+    plt.ylim([0.5,1.5])
+    plt.savefig("/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter8/Figs/sc-cc-stage-{}.png".format(1))
+    plt.show()
+
+def stage2():
+    plt.figure(figsize=(4,3))
+    plt.title("Stage 2 - Tie, delete v2 to win")
+
+    drawAgentLine(6, 8, 1, "P", "black")
+    drawAgentLine(6.5, 7.5, 0.85, "v1", "black")
+
+
+    drawAgentLine(1, 4, 1, "c1", "black")
+    drawAgentLine(3.5, 4, 0.85, "v2", "black")
+
+    plt.grid(b=True, axis='both')
+    plt.xlim([0,10])
+    plt.ylim([0.5,1.5])
+    plt.savefig("/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter8/Figs/sc-cc-stage-{}.png".format(2))
+    plt.show()
+
+def stage3():
+    plt.figure(figsize=(4,3))
+    plt.title("Stage 3 - c2 not dangerous")
+
+    drawAgentLine(6, 8, 1, "P", "black")
+    drawAgentLine(6.5, 7.5, 0.85, "v1", "black")
+
+
+    drawAgentLine(1, 4, 1, "c1", "black")
+    drawAgentLine(3.5, 4, 0.85, "v2", "black")
+
+    drawAgentLine(1.3, 2, 1.15, "c2", "black")
+
+
+    plt.grid(b=True, axis='both')
+    plt.xlim([0,10])
+    plt.ylim([0.5,1.5])
+    plt.savefig("/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter8/Figs/sc-cc-stage-{}.png".format(3))
+    plt.show()
+
+def stage4():
+    plt.figure(figsize=(4,3))
+    plt.title("Stage 4 - [c1,c2] dangerous, delete [v2,v3]")
+
+    drawAgentLine(6, 8, 1, "P", "black")
+    drawAgentLine(6.5, 7.5, 0.85, "v1", "black")
+
+
+    drawAgentLine(1, 4, 1, "c1", "black")
+    drawAgentLine(3.5, 4, 0.85, "v2", "black")
+
+    drawAgentLine(1.3, 2, 1.15, "c2", "black")
+    drawAgentLine(1.35, 1.75, 0.85, "v3", "black")
+
+    plt.grid(b=True, axis='both')
+    plt.xlim([0,10])
+    plt.ylim([0.5,1.5])
+    plt.savefig("/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter8/Figs/sc-cc-stage-{}.png".format(4))
+    plt.show()
+
+#%%
+def stage5():
+    plt.figure(figsize=(4,3))
+    plt.title("Stage 5 - delete [v2, v4]")
+
+    drawAgentLine(6, 8, 1, "P", "black")
+    drawAgentLine(6.5, 7.5, 0.85, "v1", "black")
+    drawAgentLine(6.5, 7.5, 0.75, "v6", "black")
+    drawAgentLine(6.5, 7.5, 0.65, "v7", "black")
+
+
+
+    drawAgentLine(1, 4, 1, "c1", "black")
+    drawAgentLine(3.5, 4, 0.85, "v2", "black")
+
+    drawAgentLine(1.3, 2, 1.15, "c2", "black")
+    drawAgentLine(1.35, 1.75, 0.85, "v3", "black")
+
+    drawAgentLine(1.5, 3.5, 0.75, "v4", "black")
+    drawAgentLine(1.5, 3.5, 0.65, "v5", "black")
+
+
+
+    plt.grid(b=True, axis='both')
+    plt.xlim([0,10])
+    plt.ylim([0.5,1.5])
+    plt.savefig("/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter8/Figs/sc-cc-stage-{}.png".format(5))
+    plt.show()
+
+
+stage5()

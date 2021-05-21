@@ -24,11 +24,9 @@ def partitionPropertyMapper(profiles, candidatesIds, votersIds):
             status = 0
         yield (status, profile.asNumpy())
 
-def runner(start:int, end:int):
-    C = 40
-    V = 40
-    R = 4
-    distribution = 'gaussuniform'
+def runner(start:int, end:int, distribution:str, R:int):
+    C = 10
+    V = 10
 
     propertyType = "vcr"
     baseInPath = "resources/random/numpy/{}-{}-{}R-{}C{}V.npy".format(propertyType, distribution, R, C, V)
@@ -57,13 +55,16 @@ def runner(start:int, end:int):
     aggStats = pd.DataFrame({propertyStatus[k[0]]:v for k,v in stats.value_counts().to_dict().items()}.items(), columns=['property', 'count'])
     aggStats['distribution'] = distribution
     aggStats['R'] = R
-    aggStats.to_csv(baseOutStatsPath, index=False, header=True)
+    # aggStats.to_csv(baseOutStatsPath, index=False, header=True)
     return aggStats
 
 #%%
 if __name__ == "__main__":
     s = int(sys.argv[1])
     e = int(sys.argv[2])
+    distribution = sys.argv[3]
+    R = int(sys.argv[4])
     sT = time()
-    runner(s, e)
+    stats = runner(s, e, distribution, R)
     print(time() - sT)
+    print(stats)

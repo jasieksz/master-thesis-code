@@ -63,8 +63,8 @@ class Profile(NamedTuple):
 
     @staticmethod
     def fromILPRes(approvalSet: ndarray, result, candidatesIds: List[str], votersIds: List[str]):
-        voters = [Voter(id=vId, x=result['xV[{}]'.format(vId)], r=result['rV[{}]'.format(vId)]) for vId in votersIds]
-        candidates = [Candidate(id=cId, x=result['xC[{}]'.format(cId)], r=result['rC[{}]'.format(cId)]) for cId in candidatesIds]
+        voters = [Voter(id=vId, x=result['x{}'.format(vId)], r=result['r{}'.format(vId)]) for vId in votersIds]
+        candidates = [Candidate(id=cId, x=result['x{}'.format(cId)], r=result['r{}'.format(cId)]) for cId in candidatesIds]
         return Profile(A=approvalSet, C=candidates, V=voters)
 
 

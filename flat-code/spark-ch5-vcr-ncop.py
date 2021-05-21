@@ -123,7 +123,7 @@ if __name__ == "__main__":
     LOGGER.warn("\nLoading from : {}\nSaving to : {}\n".format(baseInPath, baseOutPath+ncopOutPath))
 
     start = time()
-    run(C=C, V=V, inPath=baseInPath, outPath=baseOutPath+ncopOutPath, rangeS=600, rangeE=800, R=R, distribution=distribution)
+    run(C=C, V=V, inPath=baseInPath, outPath=baseOutPath+ncopOutPath, rangeS=0, rangeE=200, R=R, distribution=distribution)
     LOGGER.warn("TOTAL Time : " + str(time() - start))
     LOGGER.warn("Statistics : {}".format(readStatistics(baseOutPath+ncopOutPath+'-stats')))
 

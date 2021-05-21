@@ -79,30 +79,3 @@ if __name__ == "__main__":
                 np.save(file=f, arr=npProfiles, allow_pickle=False)
     print(time() - startTime)
             
-# #%%
-# R = default_rng()
-
-# #%%
-# a = generateDoubleGaussRandomAgents(R, 100000, 0, 0, 0, 0)[:,0]
-import pandas as pd
-import seaborn as sns
-
-# #%%
-# R.normal(1, 0.8, size=(4))
-
-
-# #%%
-# generateDoubleGaussRandomAgents(R, 5, 0, 0, 0, 0)[:,0]
-
-#%%
-A = np.load("resources/random/numpy/vcr-{}-{}C{}V-{}S.npy".format("uniform", 10, 10, 1))
-P = [Profile.fromNumpy(a) for a in A]
-
-df = pd.DataFrame([np.sum(p.A) / 100 for p in P], columns=["x"])
-sns.displot(data=df, x="x")
-
-
-#%%
-print(Profile.fromNumpy(A[90]))
-
-#%%
