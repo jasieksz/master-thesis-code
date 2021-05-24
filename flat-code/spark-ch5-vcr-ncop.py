@@ -34,7 +34,7 @@ def run(C:int, V:int, inPath:str, outPath:str, rangeS:int=0, rangeE:int=0, R:int
     if rangeS == 0 and rangeE == 0:
         rangeE = allProfiles.shape[0] + 1
         
-    profilesRDD = sc.parallelize(allProfiles[rangeS:rangeE], numSlices=30)#.cache()
+    profilesRDD = sc.parallelize(allProfiles[rangeS:rangeE], numSlices=48)#.cache()
 
     def partitionPropertyMapper(partition):
         env = createGPEnv()
@@ -53,7 +53,6 @@ def run(C:int, V:int, inPath:str, outPath:str, rangeS:int=0, rangeE:int=0, R:int
     profilesWithPropertyRDD = profilesRDD \
         .map(lambda npProf: Profile.fromNumpy(npProf)) \
         .mapPartitions(partitionPropertyMapper).cache()
-
 
     propertyTypeCount = profilesWithPropertyRDD \
         .map(lambda t3: (t3[0], t3[1])) \
@@ -123,7 +122,7 @@ if __name__ == "__main__":
     LOGGER.warn("\nLoading from : {}\nSaving to : {}\n".format(baseInPath, baseOutPath+ncopOutPath))
 
     start = time()
-    run(C=C, V=V, inPath=baseInPath, outPath=baseOutPath+ncopOutPath, rangeS=0, rangeE=200, R=R, distribution=distribution)
+    run(C=C, V=V, inPath=baseInPath, outPath=baseOutPath+ncopOutPath, rangeS=0, rangeE=0, R=R, distribution=distribution)
     LOGGER.warn("TOTAL Time : " + str(time() - start))
     LOGGER.warn("Statistics : {}".format(readStatistics(baseOutPath+ncopOutPath+'-stats')))
 

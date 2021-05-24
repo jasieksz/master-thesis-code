@@ -6,13 +6,14 @@ from definitions import Profile
 import sys
 import numpy as np
 import pandas as pd
-from time import time
+from time import time, strftime, localtime
 from typing import List, Tuple, Dict
 
 #%%
 def partitionPropertyMapper(profiles, candidatesIds, votersIds):
     env = createGPEnv()
-    for profile in profiles:
+    for i,profile in enumerate(profiles):
+        st = time()
         crResult = detectCRProperty(A=profile.A, C=candidatesIds, V=votersIds, env=env)
         vrResult = detectVRProperty(A=profile.A, C=candidatesIds, V=votersIds, env=env)
         status = 3
@@ -22,17 +23,17 @@ def partitionPropertyMapper(profiles, candidatesIds, votersIds):
             status = 2
         elif (not crResult and not vrResult):
             status = 0
+        print("I={}, time={}, time2={}".format(i, time()-st, strftime("%H:%M:%S", localtime())))
         yield (status, profile.asNumpy())
 
 def runner(start:int, end:int, distribution:str, R:int):
-    C = 10
-    V = 10
+    C = 40
+    V = 40
 
     propertyType = "vcr"
     baseInPath = "resources/random/numpy/{}-{}-{}R-{}C{}V.npy".format(propertyType, distribution, R, C, V)
     baseOutProfilesPath = "resources/random/numpy/{}-{}-{}R-{}C{}V-{}S-{}E.npy".format("ncop", distribution, R, C, V, start, end)
     baseOutStatsPath = "resources/random/pandas/{}-{}-{}R-{}C{}V-{}S-{}E.csv".format("ncop", distribution, R, C, V, start, end)
-
 
     print("\nLoading from : {}\nSaving to : {}\n".format(baseInPath, baseOutProfilesPath))
 
@@ -50,12 +51,11 @@ def runner(start:int, end:int, distribution:str, R:int):
     with open(baseOutProfilesPath, 'wb') as f:
         np.save(file=f, arr=ncopProfiles, allow_pickle=False)
 
-
     stats = pd.DataFrame(map(lambda t2: t2[0], profileStats), columns=['property'])
     aggStats = pd.DataFrame({propertyStatus[k[0]]:v for k,v in stats.value_counts().to_dict().items()}.items(), columns=['property', 'count'])
     aggStats['distribution'] = distribution
     aggStats['R'] = R
-    # aggStats.to_csv(baseOutStatsPath, index=False, header=True)
+    aggStats.to_csv(baseOutStatsPath, index=False, header=True)
     return aggStats
 
 #%%

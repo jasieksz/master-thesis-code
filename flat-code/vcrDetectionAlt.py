@@ -12,6 +12,71 @@ def createGPEnv():
     env.start()
     return env
 
+#%%
+def createBaseModel(C: List[str], V: List[str], env=None):
+    indexPairs = list(product(range(len(C)), range(len(V))))
+
+    if env is None:
+        env = createGPEnv()
+
+    with gp.Model(env=env) as model:
+        # Xa variable - positon of agent
+        positions = {
+            "x" + agent: model.addVar(vtype=gp.GRB.CONTINUOUS, name="x" + agent) for agent in C + V
+        }
+
+        # Ra variable - radius of agent
+        radiuses = {
+            "r" + agent: model.addVar(lb=0, vtype=gp.GRB.CONTINUOUS, name="r" + agent) for agent in C + V
+        }
+
+        Z1Vars = {
+            C[c] + V[v]: model.addVar(vtype=gp.GRB.BINARY, name="Z1" + C[c] + V[v]) for c, v in indexPairs
+        }
+
+        Z2Vars = {
+            C[c] + V[v]: model.addVar(vtype=gp.GRB.BINARY, name="Z2" + C[c] + V[v]) for c, v in indexPairs
+        }
+
+        model.write('resources/models/vcr-40C40V-base.mps')
+# candidatesIds = ['C' + str(i) for i in range(40)]
+# votersIds = ['V' + str(i) for i in range(40)]
+# createBaseModel(candidatesIds, votersIds)
+
+
+#%%
+def detectVCRPropertyWithModel(A: ndarray, C: List[str], V: List[str], modelPath, env=None):
+    indexPairs = list(product(range(len(C)), range(len(V))))
+
+    if env is None:
+        env = createGPEnv()
+
+    with gp.read(modelPath) as model:
+        modelVar = {v.varName: v for v in model.getVars()}
+        # c,v - agent ID (name), cI, vI - agent index
+        for (c, v), (cI, vI) in zip(product(C, V), product(range(len(C)), range(len(V)))):
+            if A[vI, cI] == 1:
+                model.addConstr(modelVar['x' + c] - modelVar['x' + v] <= modelVar['r' + c] + modelVar['r' + v],
+                                "VCR-pos-" + c + v)
+                model.addConstr(-(modelVar['x' + c] - modelVar['x' + v]) <= modelVar['r' + c] + modelVar['r' + v],
+                                "VCR-neg-" + c + v)
+            else:
+                model.addConstr(
+                    (modelVar['Z1' + c + v] == 1) >> ((modelVar['x' + c] - modelVar['x' + v]) >= modelVar['r' + c] + modelVar['r' + v] + 1)
+                )
+                model.addConstr(
+                    (modelVar['Z2' + c + v] == 1) >> ((-modelVar['x' + c] + modelVar['x' + v]) >= modelVar['r' + c] + modelVar['r' + v] + 1)
+                )
+
+                model.addConstr(modelVar['Z1' + c + v] + modelVar['Z2' + c + v] >= 1)
+
+        model.setParam('OutputFlag', False)
+        model.optimize()
+
+        if model.Status == 2:
+            return model.Status, {v.varName: v.X for v in model.getVars() if 'r' in v.varName or 'x' in v.varName}
+        else:
+            return model.Status, {}
 
 # %%
 def detectVCRProperty(A: ndarray, C: List[str], V: List[str], env=None):
