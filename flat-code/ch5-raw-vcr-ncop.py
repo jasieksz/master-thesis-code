@@ -23,7 +23,7 @@ def partitionPropertyMapper(profiles, candidatesIds, votersIds):
             status = 2
         elif (not crResult and not vrResult):
             status = 0
-        print("I={}, time={}, time2={}".format(i, time()-st, strftime("%H:%M:%S", localtime())))
+        print("I={}, S={}, time={}, time2={}".format(i, status, time()-st, strftime("%H:%M:%S", localtime())))
         yield (status, profile.asNumpy())
 
 def runner(start:int, end:int, distribution:str, R:int):

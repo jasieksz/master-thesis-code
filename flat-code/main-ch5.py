@@ -419,12 +419,19 @@ radiusParams={
     8:"U(0,3) U(0,3)"
 }
 
+distParams={
+    'uniform': "Uniform Cands\n Uniform Voters",
+    '2gauss': "Gauss Cands\n Gauss Voters",
+    'uniformgauss': "Uniform Cands\n Gauss Voters",
+    'gaussuniform': "Gauss Cands\n Uniform Voters"
+}
 
-def f():
+#%%
+def f(C,V):
     for dist in ['uniform','2gauss','uniformgauss','gaussuniform']:
         for r in range(4,9):
-            path = [e for e in os.listdir("resources/random/spark/20C20V/ncop-{}-{}R-stats/".format(dist, r)) if e[-3:] == "csv"][0]
-            df = pd.read_csv("resources/random/spark/20C20V/ncop-{}-{}R-stats/{}".format(dist, r, path))
+            path = [e for e in os.listdir("resources/random/spark/{}C{}V/ncop-{}-{}R-stats/".format(C, V, dist, r)) if e[-3:] == "csv"][0]
+            df = pd.read_csv("resources/random/spark/{}C{}V/ncop-{}-{}R-stats/{}".format(C, V, dist, r, path))
             dist2 = dist
             if dist == 'gaussuniform':
                 dist2 = 'gauss C\n uniform V'
@@ -434,19 +441,98 @@ def f():
             df['R'] = radiusParams[r]
             yield df
 
-#%%
-data = pd.concat(f())
+def f2():
+    for dist in ['uniformgauss','gaussuniform']:
+        for r in range(5,8):
+            print(mergePandasStats(dist, r, False))
+
+def mergePandasStats(distribution, R, write=False):
+    paths = [e for e in os.listdir("resources/random/pandas/{}-{}R".format(distribution, R)) if e[-3:] == "csv"]
+    df = pd.concat((pd.read_csv("resources/random/pandas/{}-{}R/{}".format(distribution, R, path)) for path in paths))
+    df2 = df.groupby(['property', 'distribution', 'R']).sum().reset_index()
+    df2 = df2[['property', 'count', 'distribution', 'R']]
+    if write:
+        df2.to_csv("resources/random/pandas/{}-{}R-merged.csv".format(distribution, R), header=True, index=False)
+    return df2
+
+def fullMergePandasStats4040(write=False):
+    basePath = "resources/random/pandas"
+    paths = [e for e in os.listdir(basePath) if e[-3:] == "csv"]
+    df = pd.concat((pd.read_csv("{}/{}".format(basePath, filePath)) for filePath in paths))
+    if not write:
+        df['R'] = df['R'].map(radiusParams)
+        df['distribution'] = df['distribution'].map(distParams)
+    if write:
+        df.to_csv("resources/random/merged-40C40V-stats.csv", header=True, index=False)
+    return df
+
+def fullMergePandasStats2020(write=False):
+    basePath = "resources/random/pandas-20C20V"
+    paths = [e for e in os.listdir(basePath) if e[-3:] == "csv"]
+    df = pd.concat((pd.read_csv("{}/{}".format(basePath, filePath)) for filePath in paths))
+    if not write:
+        df['R'] = df['R'].map(radiusParams)
+        df['distribution'] = df['distribution'].map(distParams)
+    if write:
+        df.to_csv("resources/random/merged-20C20V-stats.csv", header=True, index=False)
+    return df
+
 
 #%%
+basePath = "resources/random/pandas"
+paths = [e for e in os.listdir(basePath) if e[-3:] == "csv"]
+for filePath in sorted(paths):
+    df = pd.read_csv("{}/{}".format(basePath, filePath))
+    total = df['count'].sum()
+    missing = 1000 - df['count'].sum()
+    df["extra"] = (df['count'] / total) * missing
+    if missing != 0:
+        print(filePath, missing, "\n", df, "\n")
 
-g = sns.catplot(data=data, x='distribution', y='count',
+#%%
+df = fullMergePandasStats4040(True)
+
+#%%
+fullMergePandasStats2020()['count'].sum()
+
+#%%
+dist = "gaussuniform"
+C,V = 40,40
+r = 4
+paths = [e for e in os.listdir("resources/random/spark/{}C{}V/ncop-{}-{}R-stats/".format(C, V, dist, r)) if e[-3:] == "csv"]
+d = pd.concat((pd.read_csv("resources/random/spark/{}C{}V/ncop-{}-{}R-stats/{}".format(C,V,dist, r, path)) for path in paths))
+d
+
+#%%
+print(d.groupby(['property', 'distribution', 'R']).sum().reset_index())
+
+#%%
+cat_order = [
+    "Uniform Cands\n Uniform Voters",
+    "Gauss Cands\n Gauss Voters",
+    "Uniform Cands\n Gauss Voters",
+    "Gauss Cands\n Uniform Voters"
+]
+
+col_order = [
+    "U(0.7,1.2) U(0.7,1.2)",
+    "U(0,3) U(0,3)",
+    "G(1.5,0.5) G(1.5,0.5)",
+    "U(0.7,1.2) G(1.5,0.5)",
+    "G(1.5,0.5) U(0.7,1.2)",
+]
+
+
+g = sns.catplot(data=fullMergePandasStats4040(False), x='distribution', y='count',
     hue='property', col='R', col_wrap=3,
-    orient="v", kind='bar', sharex=False, sharey=False)
+    orient="v", kind='bar', sharex=False, sharey=False,
+    order=cat_order,
+    col_order=col_order)
 
 g.fig.subplots_adjust(top=0.9)
 for ax in g.axes:
     ax.set_xlabel('')
-g.fig.suptitle('20 Candidates 20 Voters')
+g.fig.suptitle('40 Candidates 40 Voters')
 
 #%%
 data = pd.read_csv("resources/output/merged-stats-small-vcr.csv")

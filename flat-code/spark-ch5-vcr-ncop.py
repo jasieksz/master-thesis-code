@@ -8,6 +8,7 @@ import numpy as np
 from time import time
 from functools import partial
 import sys
+import pandas as pd
 
 #%%
 from definitions import Profile
@@ -90,7 +91,7 @@ def readStatistics(inPath:str):
         .option("inferSchema", "true") \
         .option("header", "true") \
         .csv(inPath) \
-        .collect()
+        .toPandas()
 
 def readNCOPProfiles(inPath:str, takeCount:int):
     return spark.read \
@@ -122,7 +123,9 @@ if __name__ == "__main__":
     LOGGER.warn("\nLoading from : {}\nSaving to : {}\n".format(baseInPath, baseOutPath+ncopOutPath))
 
     start = time()
-    run(C=C, V=V, inPath=baseInPath, outPath=baseOutPath+ncopOutPath, rangeS=0, rangeE=0, R=R, distribution=distribution)
+    # run(C=C, V=V, inPath=baseInPath, outPath=baseOutPath+ncopOutPath, rangeS=0, rangeE=0, R=R, distribution=distribution)
     LOGGER.warn("TOTAL Time : " + str(time() - start))
-    LOGGER.warn("Statistics : {}".format(readStatistics(baseOutPath+ncopOutPath+'-stats')))
+    stats = readStatistics(baseOutPath+ncopOutPath+'-stats')
+    stats.to_csv("resources/random/pandas-20C20V/{}-{}R-merged.csv".format(distribution, R), index=False, header=True)
+    LOGGER.warn("Statistics : {}".format(stats))
 
