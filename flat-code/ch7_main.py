@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 import pandas as pd
 import numpy as np
-from itertools import combinations
+from itertools import combinations, product
 from time import time
 from typing import List, Tuple, NamedTuple
 from functools import partial
@@ -34,50 +34,121 @@ def detectCRPropertyWrapper(gEnv, A, C, V):
 def detectVRPropertyWrapper(gEnv, A, C, V):
     return detectVRProperty(A, C, V, gEnv)
 
+def detectFCOP(A, C, V, gEnv):
+    return detectVRProperty(A, C, V, gEnv) and detectCRProperty(A, C, V, gEnv)
+
+def detectCOP(A, C, V, gEnv):
+    return detectVRProperty(A, C, V, gEnv) or detectCRProperty(A, C, V, gEnv)
+
+##################################################################
+##################################################################
+##################################################################
+
+class multiDeletionSearchResults(NamedTuple):
+    status:int
+    kC:int
+    kV:int
+    combination:List[int]
+
+class fullMultiDeletionSearch(NamedTuple):
+    property:str
+    axis:int
+    kC:int
+    kV:int
+
+def multiCombinationDeletionSearch(A:np.ndarray, deleteAxis:int, propertyDetectionFun, gEnv) -> deletionSearchResults:
+    k = 1
+    results = []
+    sT = time()
+    for dC,dV in product(range(1,5), range(1,5)):
+        for combC,combV in product(combinations(range(A.shape[1]), dC), combinations(range(A.shape[0]),dV)):
+            tmpA = deleteCandidates(A, combC)
+            tmpA = deleteVoters(tmpA, combV)
+            tmpV,tmpC = getVCLists(tmpA)
+            propertyStatus = propertyDetectionFun(tmpA, tmpC, tmpV, gEnv)
+            if propertyStatus:
+                return multiDeletionSearchResults(status=1, kC=dC, kV=dV, combination=[(combC, combV)])
+    print("NOT FOUND ", time() - sT)
+    return multiDeletionSearchResults(status=0, kC=dC+1, kV=dV+1, combination=[])
+
+def fullProfileMultiSearch(profiles):
+    env = createGPEnv()
+    detectionFuns = {"cr":detectCRProperty, "vr":detectVRProperty}
+    deleteAxes = {"cand":1, "voter":0}
+    results = []
+    for profile in profiles:
+        for keyDel,deletionAxis in deleteAxes.items():
+            minKCOP = (1000,1000)
+            for keyProp,detectF in detectionFuns.items():
+                res = multiCombinationDeletionSearch(np.copy(profile.A), deletionAxis, detectF, env)
+                minKCOP = (res.kC, res.kV) if sum(minKCOP) > res.kC + res.kV else minKCOP
+                res2 = fullMultiDeletionSearch(property=keyProp, axis=keyDel, kC=res.kC, kV=res.kV)
+                results.append(res2)
+            results.append(fullMultiDeletionSearch(property="cop", axis=keyDel, kC=minKCOP[0], kV=minKCOP[1]))
+    return results
+
+##################################################################
+##################################################################
+##################################################################
+
 class deletionSearchResults(NamedTuple):
     status:int
     k:int
     combination:List[int]
 
+class fullDeletionSearch(NamedTuple):
+    property:str
+    axis:int
+    k:int
 
-def fullDetectProperty(A:np.ndarray, env) -> int:
-    Vs, Cs = getVCLists(A)
-    crResult = detectCRProperty(A=A, C=Cs, V=Vs, env=env)
-    vrResult = detectVRProperty(A=A, C=Cs, V=Vs, env=env)
-    status = 0
-    if (crResult and not vrResult):
-        status = 1
-    elif (not crResult and vrResult):
-        status = 2
-    elif (crResult and vrResult):
-        status = 3
-    return status
 
-# axis=0 -> deleteVoters | axis=1 -> deleteCandidates
-def combinationDeletionSearch(A:np.ndarray, deleteAxis:int, gEnv) -> deletionSearchResults:
+def combinationDeletionSearch(A:np.ndarray, deleteAxis:int, propertyDetectionFun, gEnv) -> deletionSearchResults:
     deleteFunction = deleteCandidates if deleteAxis == 1 else deleteVoters
-    found = False
     k = 1
     results = []
-    while not found and k < 5:
+    while k < 5:
+        sT = time()
         for combination in map(list, combinations(range(A.shape[deleteAxis]), k)):
             tmpA = deleteFunction(A, combination)
-            propertyStatus = fullDetectProperty(tmpA, gEnv)
-            if propertyStatus != 0:
-                found = True
-                results.append(deletionSearchResults(propertyStatus, k, combination))
+            tmpV,tmpC = getVCLists(tmpA)
+            propertyStatus = propertyDetectionFun(tmpA, tmpC, tmpV, gEnv)
+            if propertyStatus:
+                return deletionSearchResults(1, k, combination)
+
         k += 1
-    return results if found else deletionSearchResults(0, k, [])
+    print("NOT FOUND ", time() - sT)
+    return deletionSearchResults(0, k, [])
 
-def exampleRun(profile):
+def fullProfileSearch(profiles):
     env = createGPEnv()
-
-
+    detectionFuns = {"cr":detectCRProperty, "vr":detectVRProperty}
+    deleteAxes = {"cand":1, "voter":0}
+    results = []
+    for profile in profiles:
+        for keyDel,deletionAxis in deleteAxes.items():
+            minKCOP = 20
+            for keyProp,detectF in detectionFuns.items():
+                res = combinationDeletionSearch(np.copy(profile.A), deletionAxis, detectF, env)
+                minKCOP = min(minKCOP, res.k)
+                res2 = fullDeletionSearch(property=keyProp, axis=keyDel, k=res.k)
+                results.append(res2)
+            results.append(fullDeletionSearch(property="cop", axis=keyDel, k=minKCOP))
+    return results
+    
 def NCOP_1010():
-    return list(map(Profile.fromNumpy, np.load("resources/random/numpy/ncop-2gauss-8R-10C10V-0S-100E.npy")))
+    return list(map(Profile.fromNumpy, np.load("resources/random/numpy/ncop/ncop-2gauss-4R-10C10V.npy")))
+
+def NCOP_2020():
+    return list(map(Profile.fromNumpy, np.load("resources/random/numpy/ncop/ncop-2gauss-4R-20C20V.npy")))
+
+def NCOP_1212():
+    return list(map(Profile.fromNumpy, np.load("resources/random/numpy/ncop/ncop-2gauss-4R-12C12V.npy")))
+
+def NCOP_CV(C:int, V:int):
+    return list(map(Profile.fromNumpy, np.load("resources/random/numpy/ncop/ncop-2gauss-4R-{}C{}V.npy".format(C,V))))
 
 def prefHeatmap(profile):
-    plt.figure(figsize=(6,5))
+    plt.figure(figsize=(5,4))
     sns.heatmap((getVCRProfileInCRVROrder(profile)).A, cmap=['black', 'gray'])
     plt.show()
 
@@ -85,17 +156,48 @@ def prefHeatmap(profile):
 #############################################
 # NOTEBOOK
 #%%
-P1010 = NCOP_1010()
+P1010 = NCOP_CV(10,10)
+P2020 = NCOP_CV(20,20)
+P1212 = NCOP_CV(12,12)
+
+#%%
+P1515 = NCOP_CV(15,15)
+len(P1515)
+
+#%%
 env = createGPEnv()
 
 #%%
-# prefHeatmap(P1010[5])
-res = combinationDeletionSearch(P1010[5].A, 1, env)
-res
+len(P1212)
 
 #%%
-tmpA = deleteCandidates(np.copy(P1010[5].A), [6])
-vs,cs = getVCLists(tmpA)
-_,res = findCRPoints(tmpA, cs, vs, env)
-tmpP = Profile.fromILPRes(tmpA, res, cs, vs)
-prefHeatmap(tmpP)
+start = time()
+res2 = fullProfileSearch(P1515[70:100])
+print("TIME : ", time() - start)
+
+#%%
+dfAll = pd.concat([dfAll, pd.DataFrame(res2)])
+dfAll.describe()
+dfAll2 = dfAll
+dfAll2['deleted agent'] = dfAll2['axis']
+
+#%%
+g = sns.violinplot(data=dfAll2, x='property', y='k', hue='deleted agent', split=True, inner="stick")
+g.set_title("Deleting k agents to transform TVCR into VR / CR\n 50 Profiles with 15 Candidates 15 Voters")
+
+#%%
+start = time()
+res3 = fullProfileMultiSearch(P1515[10:30])
+print("TIME : ", time() - start)
+res3
+
+#%%
+dfMulti = pd.concat([dfMulti, pd.DataFrame(res3)])
+dfMulti["k"] = dfMulti['kC'] + dfMulti['kV']
+dfMulti.describe()
+
+#%%
+sns.violinplot(data=dfMulti, x='property', y='k', hue='axis', split=True, inner="stick")
+
+#%%
+dfMulti.head()

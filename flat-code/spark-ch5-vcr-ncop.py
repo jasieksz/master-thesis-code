@@ -98,6 +98,7 @@ def readNCOPProfiles(inPath:str, takeCount:int):
         .option("inferSchema", "true") \
         .parquet(inPath) \
         .rdd.map(lambda a: Profile.fromNumpy(np.array(a[2:]))) \
+        .map(lambda p: profileAsNumpy(p)) \
         .take(takeCount)
 
 #%%
@@ -123,9 +124,11 @@ if __name__ == "__main__":
     LOGGER.warn("\nLoading from : {}\nSaving to : {}\n".format(baseInPath, baseOutPath+ncopOutPath))
 
     start = time()
-    # run(C=C, V=V, inPath=baseInPath, outPath=baseOutPath+ncopOutPath, rangeS=0, rangeE=0, R=R, distribution=distribution)
+    run(C=C, V=V, inPath=baseInPath, outPath=baseOutPath+ncopOutPath, rangeS=0, rangeE=0, R=R, distribution=distribution)
     LOGGER.warn("TOTAL Time : " + str(time() - start))
     stats = readStatistics(baseOutPath+ncopOutPath+'-stats')
-    stats.to_csv("resources/random/pandas-20C20V/{}-{}R-merged.csv".format(distribution, R), index=False, header=True)
     LOGGER.warn("Statistics : {}".format(stats))
+    profiles = readNCOPProfiles(baseOutPath+ncopOutPath+'-profiles', 1000)
+    np.save("resources/random/numpy/ncop/ncop-{}-{}R-{}C{}V.npy".format(distribution, R, C, V),profiles, allow_pickle=False)
+    # stats.to_csv("resources/random/pandas-20C20V/{}-{}R-merged.csv".format(distribution, R), index=False, header=True)
 
