@@ -95,6 +95,8 @@ def runner(start:int, end:int, C:int, V:int, distribution:str, R:int):
     profiles = map(Profile.fromNumpy, np.load(baseInPath)[start:end])
 
     transformStats = pd.DataFrame(fullProfileSearch(profiles))
+    transformStats['distribution'] = distribution
+    transformStats['R'] = R
     transformStats.to_csv(baseOutStatsPath, index=False, header=True)
     return transformStats
 

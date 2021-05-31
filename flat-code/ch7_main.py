@@ -12,6 +12,7 @@ from itertools import combinations, product
 from time import time
 from typing import List, Tuple, NamedTuple
 from functools import partial
+import os
 
 
 #%%
@@ -56,7 +57,7 @@ class fullMultiDeletionSearch(NamedTuple):
     kC:int
     kV:int
 
-def multiCombinationDeletionSearch(A:np.ndarray, deleteAxis:int, propertyDetectionFun, gEnv) -> deletionSearchResults:
+def multiCombinationDeletionSearch(A:np.ndarray, deleteAxis:int, propertyDetectionFun, gEnv) -> multiDeletionSearchResults:
     k = 1
     results = []
     sT = time()
@@ -86,6 +87,7 @@ def fullProfileMultiSearch(profiles):
                 results.append(res2)
             results.append(fullMultiDeletionSearch(property="cop", axis=keyDel, kC=minKCOP[0], kV=minKCOP[1]))
     return results
+
 
 ##################################################################
 ##################################################################
@@ -182,8 +184,13 @@ dfAll2 = dfAll
 dfAll2['deleted agent'] = dfAll2['axis']
 
 #%%
-g = sns.violinplot(data=dfAll2, x='property', y='k', hue='deleted agent', split=True, inner="stick")
-g.set_title("Deleting k agents to transform TVCR into VR / CR\n 50 Profiles with 15 Candidates 15 Voters")
+df = pd.read_csv("resources/random/ch7-transform/ncop-2gauss-4R-15C15V-0S-200E.csv")
+df['deleted agent'] = df['axis']
+df.describe()
+
+#%%
+g = sns.violinplot(data=df, x='property', y='k', hue='deleted agent', split=True, inner="stick", scale="area")
+g.set_title("Deleting k agents to transform TVCR into VR / CR\n 200 Profiles with 15 Candidates 15 Voters")
 
 #%%
 start = time()
@@ -200,4 +207,16 @@ dfMulti.describe()
 sns.violinplot(data=dfMulti, x='property', y='k', hue='axis', split=True, inner="stick")
 
 #%%
-dfMulti.head()
+basePath = "resources/random/ch7-transform"
+paths = [e for e in os.listdir(basePath) if e[-3:] == "csv"]
+df = pd.concat((pd.read_csv("{}/{}".format(basePath, filePath)) for filePath in paths))
+df['deleted agent'] = df['axis']
+df.describe()
+
+#%%
+g = sns.violinplot(data=df, x='property', y='k', hue='deleted agent', split=True, inner="stick", scale="area")
+g.set_title("Deleting k agents to transform TVCR into VR / CR\n 1000 Profiles with 15 Candidates 15 Voters\nR=2Gauss, X=2Gauss")
+
+
+#%%
+df.groupby(['k', 'property', 'axis']).count().reset_index()

@@ -98,13 +98,13 @@ def generateVCRProfilesByRadiusUniform(RNG, count:int,
 def runnerVCRProfilesByRadiusUniform(C:int, V:int):
     RNG=default_rng()
     distribution = 'uniform'
-    count = 1000
+    count = 4000
 
     radiusParams={
         4:(partial(gaussRadiusWrapper, RNG, 1.5, 0.5), partial(gaussRadiusWrapper, RNG, 1.5, 0.5)),
-        5:(partial(uniformRadiusWrapper, RNG, 0.7, 1.2), partial(gaussRadiusWrapper, RNG, 1.5, 0.5)),
-        6:(partial(gaussRadiusWrapper, RNG, 1.5, 0.5), partial(uniformRadiusWrapper, RNG, 0.7, 1.2)),
-        7:(partial(uniformRadiusWrapper, RNG, 0.7, 1.2), partial(uniformRadiusWrapper, RNG, 0.7, 1.2)),
+        # 5:(partial(uniformRadiusWrapper, RNG, 0.7, 1.2), partial(gaussRadiusWrapper, RNG, 1.5, 0.5)),
+        # 6:(partial(gaussRadiusWrapper, RNG, 1.5, 0.5), partial(uniformRadiusWrapper, RNG, 0.7, 1.2)),
+        # 7:(partial(uniformRadiusWrapper, RNG, 0.7, 1.2), partial(uniformRadiusWrapper, RNG, 0.7, 1.2)),
         8:(partial(uniformRadiusWrapper, RNG, 0, 3), partial(uniformRadiusWrapper, RNG, 0, 3)),
     }
 
@@ -167,14 +167,14 @@ def generateVCRProfilesByRadius2Gauss(RNG, count:int,
 def runnerVCRProfilesByRadius2Gauss(C:int, V:int):
     RNG=default_rng()
     distribution = '2gauss'
-    count = 1000
+    count = 4000
 
     radiusParams={
         4:(partial(gaussRadiusWrapper, RNG, 1.5, 0.5), partial(gaussRadiusWrapper, RNG, 1.5, 0.5)),
         # 5:(partial(uniformRadiusWrapper, RNG, 0.7, 1.2), partial(gaussRadiusWrapper, RNG, 1.5, 0.5)),
         # 6:(partial(gaussRadiusWrapper, RNG, 1.5, 0.5), partial(uniformRadiusWrapper, RNG, 0.7, 1.2)),
         # 7:(partial(uniformRadiusWrapper, RNG, 0.7, 1.2), partial(uniformRadiusWrapper, RNG, 0.7, 1.2)),
-        # 8:(partial(uniformRadiusWrapper, RNG, 0, 3), partial(uniformRadiusWrapper, RNG, 0, 3)),
+        8:(partial(uniformRadiusWrapper, RNG, 0, 3), partial(uniformRadiusWrapper, RNG, 0, 3)),
     }
 
     path = "resources/random/numpy/vcr-{}-{}R-{}C{}V.npy"
@@ -230,12 +230,12 @@ def generateVCRProfilesByRadiusGaussUniform(RNG, count:int,
 def runnerVCRProfilesByRadiusGaussUniform(C:int, V:int):
     RNG=default_rng()
     distribution = 'gaussuniform'
-    count = 1000
+    count = 4000
     radiusParams={
         4:(partial(gaussRadiusWrapper, RNG, 1.5, 0.5), partial(gaussRadiusWrapper, RNG, 1.5, 0.5)),
-        5:(partial(uniformRadiusWrapper, RNG, 0.7, 1.2), partial(gaussRadiusWrapper, RNG, 1.5, 0.5)),
-        6:(partial(gaussRadiusWrapper, RNG, 1.5, 0.5), partial(uniformRadiusWrapper, RNG, 0.7, 1.2)),
-        7:(partial(uniformRadiusWrapper, RNG, 0.7, 1.2), partial(uniformRadiusWrapper, RNG, 0.7, 1.2)),
+        # 5:(partial(uniformRadiusWrapper, RNG, 0.7, 1.2), partial(gaussRadiusWrapper, RNG, 1.5, 0.5)),
+        # 6:(partial(gaussRadiusWrapper, RNG, 1.5, 0.5), partial(uniformRadiusWrapper, RNG, 0.7, 1.2)),
+        # 7:(partial(uniformRadiusWrapper, RNG, 0.7, 1.2), partial(uniformRadiusWrapper, RNG, 0.7, 1.2)),
         8:(partial(uniformRadiusWrapper, RNG, 0, 3), partial(uniformRadiusWrapper, RNG, 0, 3)),
     }
 
@@ -292,12 +292,12 @@ def generateVCRProfilesByRadiusUniformGauss(RNG, count:int,
 def runnerVCRProfilesByRadiusUniformGauss(C:int, V:int):
     RNG=default_rng()
     distribution = 'uniformgauss'
-    count = 1000
+    count = 4000
     radiusParams={
         4:(partial(gaussRadiusWrapper, RNG, 1.5, 0.5), partial(gaussRadiusWrapper, RNG, 1.5, 0.5)),
-        5:(partial(uniformRadiusWrapper, RNG, 0.7, 1.2), partial(gaussRadiusWrapper, RNG, 1.5, 0.5)),
-        6:(partial(gaussRadiusWrapper, RNG, 1.5, 0.5), partial(uniformRadiusWrapper, RNG, 0.7, 1.2)),
-        7:(partial(uniformRadiusWrapper, RNG, 0.7, 1.2), partial(uniformRadiusWrapper, RNG, 0.7, 1.2)),
+        # 5:(partial(uniformRadiusWrapper, RNG, 0.7, 1.2), partial(gaussRadiusWrapper, RNG, 1.5, 0.5)),
+        # 6:(partial(gaussRadiusWrapper, RNG, 1.5, 0.5), partial(uniformRadiusWrapper, RNG, 0.7, 1.2)),
+        # 7:(partial(uniformRadiusWrapper, RNG, 0.7, 1.2), partial(uniformRadiusWrapper, RNG, 0.7, 1.2)),
         8:(partial(uniformRadiusWrapper, RNG, 0, 3), partial(uniformRadiusWrapper, RNG, 0, 3)),
     }
     path = "resources/random/numpy/vcr-{}-{}R-{}C{}V.npy"
@@ -319,16 +319,16 @@ R = default_rng()
 gEnv = createGPEnv()
 
 #%%
-runnerVCRProfilesByRadiusUniform(40,40)
+runnerVCRProfilesByRadiusUniform(15,15)
 
 #%%
 runnerVCRProfilesByRadius2Gauss(15,15)
 
 #%%
-runnerVCRProfilesByRadiusGaussUniform(40,40)
+runnerVCRProfilesByRadiusGaussUniform(15,15)
 
 #%%
-runnerVCRProfilesByRadiusUniformGauss(40,40)
+runnerVCRProfilesByRadiusUniformGauss(15,15)
 
 
 #%%

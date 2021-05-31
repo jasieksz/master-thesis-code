@@ -34,6 +34,8 @@ def run(C:int, V:int, inPath:str, outPath:str, rangeS:int=0, rangeE:int=0, R:int
     allProfiles = np.load(inPath)
     if rangeS == 0 and rangeE == 0:
         rangeE = allProfiles.shape[0] + 1
+    
+    LOGGER.warn("RANGE END = {}".format(rangeE))
         
     profilesRDD = sc.parallelize(allProfiles[rangeS:rangeE], numSlices=48)#.cache()
 
@@ -129,6 +131,7 @@ if __name__ == "__main__":
     stats = readStatistics(baseOutPath+ncopOutPath+'-stats')
     LOGGER.warn("Statistics : {}".format(stats))
     profiles = readNCOPProfiles(baseOutPath+ncopOutPath+'-profiles', 1000)
-    np.save("resources/random/numpy/ncop/ncop-{}-{}R-{}C{}V.npy".format(distribution, R, C, V),profiles, allow_pickle=False)
+    LOGGER.warn("PROFILES size = {}".format(len(profiles)))
+    np.save("resources/random/numpy/ncop/ncop-{}-{}R-{}C{}V.npy".format(distribution, R, C, V), profiles, allow_pickle=False)
     # stats.to_csv("resources/random/pandas-20C20V/{}-{}R-merged.csv".format(distribution, R), index=False, header=True)
 
