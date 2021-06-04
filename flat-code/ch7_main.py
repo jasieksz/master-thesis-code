@@ -61,7 +61,7 @@ def multiCombinationDeletionSearch(A:np.ndarray, deleteAxis:int, propertyDetecti
     k = 1
     results = []
     sT = time()
-    for dC,dV in product(range(1,5), range(1,5)):
+    for dC,dV in sorted(list(product(range(1,5), range(1,5))), key=lambda t2: (t2[0] + t2[1])):
         for combC,combV in product(combinations(range(A.shape[1]), dC), combinations(range(A.shape[0]),dV)):
             tmpA = deleteCandidates(A, combC)
             tmpA = deleteVoters(tmpA, combV)
@@ -154,28 +154,25 @@ def prefHeatmap(profile):
     sns.heatmap((getVCRProfileInCRVROrder(profile)).A, cmap=['black', 'gray'])
     plt.show()
 
+#%%
 #############################################
 #############################################
 # NOTEBOOK
-#%%
-P1010 = NCOP_CV(10,10)
-P2020 = NCOP_CV(20,20)
-P1212 = NCOP_CV(12,12)
 
-#%%
 P1515 = NCOP_CV(15,15)
 len(P1515)
 
 #%%
 env = createGPEnv()
 
-#%%
-len(P1212)
 
 #%%
 start = time()
-res2 = fullProfileSearch(P1515[70:100])
+res2 = fullProfileSearch(P1515[70:72])
 print("TIME : ", time() - start)
+
+#%%
+res2
 
 #%%
 dfAll = pd.concat([dfAll, pd.DataFrame(res2)])
@@ -194,7 +191,7 @@ g.set_title("Deleting k agents to transform TVCR into VR / CR\n 200 Profiles wit
 
 #%%
 start = time()
-res3 = fullProfileMultiSearch(P1515[10:30])
+res3 = fullProfileMultiSearch(P1515[10:11])
 print("TIME : ", time() - start)
 res3
 
@@ -220,3 +217,61 @@ g.set_title("Deleting k agents to transform TVCR into VR / CR\n 1000 Profiles wi
 
 #%%
 df.groupby(['k', 'property', 'axis']).count().reset_index()
+
+
+#%%
+### GRID VIOLIN VIS
+############
+############
+############
+D = ['2gauss', 'uniform', 'gaussuniform', 'uniformgauss']
+R = [4,8]
+paths = ["resources/random/ch7-transform/{}-{}R/{}".format(dist,r,e) for dist in D for r in R  for e in os.listdir("resources/random/ch7-transform/{}-{}R".format(dist, r)) if e[-3:] == "csv"]
+
+#%%
+radiusParams={
+    4:"G(1.5,0.5) G(1.5,0.5)",
+    5:"U(0.7,1.2) G(1.5,0.5)",
+    6:"G(1.5,0.5) U(0.7,1.2)",
+    7:"U(0.7,1.2) U(0.7,1.2)",
+    8:"U(0,3) U(0,3)"
+}
+
+distParams={
+    'uniform': "Uniform Cands\n Uniform Voters",
+    '2gauss': "Gauss Cands\n Gauss Voters",
+    'uniformgauss': "Uniform Cands\n Gauss Voters",
+    'gaussuniform': "Gauss Cands\n Uniform Voters"
+}
+
+#%%
+transformDf = pd.concat((pd.read_csv(path) for path in paths))
+transformDf['deleted agent'] = transformDf['axis']
+transformDf['R'] = transformDf['R'].map(radiusParams)
+transformDf['distribution'] = transformDf['distribution'].map(distParams)
+transformDf.describe()
+
+#%%
+tDfUniform = transformDf.loc[(transformDf['distribution'] == 'uniform')]
+tDfGauss = transformDf.loc[(transformDf['distribution'] == '2gauss')]
+tDf1 = pd.concat([tDfUniform, tDfGauss])
+
+#%%
+sns.catplot(kind='violin',
+    data=transformDf, x='distribution', y='k',
+    hue='deleted agent', col='property', row='R',
+    split=True, sharex=False, sharey=True)
+
+savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter4/Figs/15-15-tr-grid-x{}-col{}-row{}.png"
+plt.savefig(savePath.format('dist', 'prop', 'R'))
+
+#%%
+print(transformDf.head(), sep=',')
+
+#%%
+def combs():
+    res = []
+    for dC,dV in sorted(list(product(range(1,5), range(1,5))), key=lambda t2: (t2[0] + t2[1])):
+        for combC,combV in product(combinations(range(7), dC), combinations(range(7),dV)):
+            res.append((combC, combV))
+    return res

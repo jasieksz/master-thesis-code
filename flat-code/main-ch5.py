@@ -11,8 +11,9 @@ import numpy as np
 from numpy.random import default_rng
 import pandas as pd
 import seaborn as sns
+from matplotlib import pyplot as plt
 from time import time
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, NamedTuple
 from functools import partial
 
 
@@ -70,12 +71,12 @@ def generateVCRProfileByRadiusUniform(RNG,
     xMin = -10
     xMax = 10
 
+    cPositions = RNG.uniform(low=xMin, high=xMax, size=C)
+    vPositions = RNG.uniform(low=xMin, high=xMax, size=V)
+
     for key, (rCFun,rVFun) in radiusParams.items():
         radiiC = normalizeRadius(rCFun(C))
         radiiV = normalizeRadius(rVFun(V))
-
-        cPositions = RNG.uniform(low=xMin, high=xMax, size=C)
-        vPositions = RNG.uniform(low=xMin, high=xMax, size=V)
 
         candidates = np.dstack((cPositions, radiiC))[0]
         voters = np.dstack((vPositions, radiiV))[0]
@@ -102,9 +103,9 @@ def runnerVCRProfilesByRadiusUniform(C:int, V:int):
 
     radiusParams={
         4:(partial(gaussRadiusWrapper, RNG, 1.5, 0.5), partial(gaussRadiusWrapper, RNG, 1.5, 0.5)),
-        # 5:(partial(uniformRadiusWrapper, RNG, 0.7, 1.2), partial(gaussRadiusWrapper, RNG, 1.5, 0.5)),
-        # 6:(partial(gaussRadiusWrapper, RNG, 1.5, 0.5), partial(uniformRadiusWrapper, RNG, 0.7, 1.2)),
-        # 7:(partial(uniformRadiusWrapper, RNG, 0.7, 1.2), partial(uniformRadiusWrapper, RNG, 0.7, 1.2)),
+        5:(partial(uniformRadiusWrapper, RNG, 0.7, 1.2), partial(gaussRadiusWrapper, RNG, 1.5, 0.5)),
+        6:(partial(gaussRadiusWrapper, RNG, 1.5, 0.5), partial(uniformRadiusWrapper, RNG, 0.7, 1.2)),
+        7:(partial(uniformRadiusWrapper, RNG, 0.7, 1.2), partial(uniformRadiusWrapper, RNG, 0.7, 1.2)),
         8:(partial(uniformRadiusWrapper, RNG, 0, 3), partial(uniformRadiusWrapper, RNG, 0, 3)),
     }
 
@@ -134,17 +135,19 @@ def generateVCRProfileByRadius2Gauss(RNG,
     majorityV = int(V * 0.7)
     minorityV = V - majorityV
 
+    positionsCMajor = RNG.normal(-3, 1.8, size=majorityC)
+    positionsCMinor = RNG.normal(3, 1.8, size=minorityC)
+    cPositions = np.append(positionsCMajor, positionsCMinor)
+
+    positionsVMajor = RNG.normal(-3, 1.8, size=majorityV)
+    positionsVMinor = RNG.normal(3, 1.8, size=minorityV)
+    vPositions = np.append(positionsVMajor, positionsVMinor)
+
     for key, (rCFun,rVFun) in radiusParams.items():
         radiiC = normalizeRadius(rCFun(C))
         radiiV = normalizeRadius(rVFun(V))
 
-        positionsCMajor = RNG.normal(-3, 1.8, size=majorityC)
-        positionsCMinor = RNG.normal(3, 1.8, size=minorityC)
-        cPositions = np.append(positionsCMajor, positionsCMinor)
 
-        positionsVMajor = RNG.normal(-3, 1.8, size=majorityV)
-        positionsVMinor = RNG.normal(3, 1.8, size=minorityV)
-        vPositions = np.append(positionsVMajor, positionsVMinor)
 
         candidates = np.dstack((cPositions, radiiC))[0]
         voters = np.dstack((vPositions, radiiV))[0]
@@ -200,14 +203,16 @@ def generateVCRProfileByRadiusGaussUniform(RNG,
     majorityC = int(C * 0.7)
     minorityC = C - majorityC
 
+    positionsCMajor = RNG.normal(-3, 1.8, size=majorityC)
+    positionsCMinor = RNG.normal(3, 1.8, size=minorityC)
+    cPositions = np.append(positionsCMajor, positionsCMinor)
+    vPositions = RNG.uniform(low=-10, high=10, size=V)
+
     for key, (rCFun,rVFun) in radiusParams.items():
         radiiC = normalizeRadius(rCFun(C))
         radiiV = normalizeRadius(rVFun(V))
 
-        positionsCMajor = RNG.normal(-3, 1.8, size=majorityC)
-        positionsCMinor = RNG.normal(3, 1.8, size=minorityC)
-        cPositions = np.append(positionsCMajor, positionsCMinor)
-        vPositions = RNG.uniform(low=-10, high=10, size=V)
+
         
         candidates = np.dstack((cPositions, radiiC))[0]
         voters = np.dstack((vPositions, radiiV))[0]
@@ -262,15 +267,16 @@ def generateVCRProfileByRadiusUniformGauss(RNG,
     majorityV = int(C * 0.7)
     minorityV = V - majorityV
 
+    cPositions = RNG.uniform(low=-10, high=10, size=V)
+    positionsVMajor = RNG.normal(-3, 1.8, size=majorityV)
+    positionsVMinor = RNG.normal(3, 1.8, size=minorityV)
+    vPositions = np.append(positionsVMajor, positionsVMinor)
+
     for key, (rCFun,rVFun) in radiusParams.items():
         radiiC = normalizeRadius(rCFun(C))
         radiiV = normalizeRadius(rVFun(V))
 
-        cPositions = RNG.uniform(low=-10, high=10, size=V)
-        positionsVMajor = RNG.normal(-3, 1.8, size=majorityV)
-        positionsVMinor = RNG.normal(3, 1.8, size=minorityV)
-        vPositions = np.append(positionsVMajor, positionsVMinor)
-
+        
         candidates = np.dstack((cPositions, radiiC))[0]
         voters = np.dstack((vPositions, radiiV))[0]
         profile = npProfileFromVotersAndCandidates(voters, candidates)
@@ -410,20 +416,21 @@ time() - sT
 #%%
 
 #%%
-radiusParams={
-    4:"G(1.5,0.5) G(1.5,0.5)",
-    5:"U(0.7,1.2) G(1.5,0.5)",
-    6:"G(1.5,0.5) U(0.7,1.2)",
-    7:"U(0.7,1.2) U(0.7,1.2)",
-    8:"U(0,3) U(0,3)"
+positionNames = {
+    "uniform" :         "UCP/UVP",
+    "2gauss" :          "GCP/GVP",
+    "uniformgauss" :    "UCP/GVP",
+    "gaussuniform" :    "GCP/UVP",
 }
 
-distParams={
-    'uniform': "Uniform Cands\n Uniform Voters",
-    '2gauss': "Gauss Cands\n Gauss Voters",
-    'uniformgauss': "Uniform Cands\n Gauss Voters",
-    'gaussuniform': "Gauss Cands\n Uniform Voters"
+radiiNames = {
+    4 : "GCR/GVR",
+    5 : "SUCR/GVR",
+    6 : "GCR/SUVR",
+    7 : "SUCR/SUVR",
+    8 : "LUCR/LUVR",
 }
+
 
 #%%
 def f(C,V):
@@ -459,8 +466,9 @@ def fullMergePandasStats4040(write=False):
     paths = [e for e in os.listdir(basePath) if e[-3:] == "csv"]
     df = pd.concat((pd.read_csv("{}/{}".format(basePath, filePath)) for filePath in paths))
     if not write:
-        df['R'] = df['R'].map(radiusParams)
-        df['distribution'] = df['distribution'].map(distParams)
+        df['R'] = df['R'].map(radiiNames)
+        df['distribution'] = df['distribution'].map(positionNames)
+        df['property'] = df['property'].map({"ncop":"TVCR", "vr":"VR", "cr":"CR", "cop":"FCOP"})
     if write:
         df.to_csv("resources/random/merged-40C40V-stats.csv", header=True, index=False)
     return df
@@ -470,8 +478,9 @@ def fullMergePandasStats2020(write=False):
     paths = [e for e in os.listdir(basePath) if e[-3:] == "csv"]
     df = pd.concat((pd.read_csv("{}/{}".format(basePath, filePath)) for filePath in paths))
     if not write:
-        df['R'] = df['R'].map(radiusParams)
-        df['distribution'] = df['distribution'].map(distParams)
+        df['R'] = df['R'].map(radiiNames)
+        df['distribution'] = df['distribution'].map(positionNames)
+        df['property'] = df['property'].map({"ncop":"TVCR", "vr":"VR", "cr":"CR", "cop":"FCOP"})
     if write:
         df.to_csv("resources/random/merged-20C20V-stats.csv", header=True, index=False)
     return df
@@ -506,117 +515,199 @@ d
 print(d.groupby(['property', 'distribution', 'R']).sum().reset_index())
 
 #%%
-cat_order = [
-    "Uniform Cands\n Uniform Voters",
-    "Gauss Cands\n Gauss Voters",
-    "Uniform Cands\n Gauss Voters",
-    "Gauss Cands\n Uniform Voters"
-]
+df4040 = fullMergePandasStats4040(False)
+df2020 = fullMergePandasStats2020(False)
 
-col_order = [
-    "U(0.7,1.2) U(0.7,1.2)",
-    "U(0,3) U(0,3)",
-    "G(1.5,0.5) G(1.5,0.5)",
-    "U(0.7,1.2) G(1.5,0.5)",
-    "G(1.5,0.5) U(0.7,1.2)",
-]
-
-
-g = sns.catplot(data=fullMergePandasStats4040(False), x='distribution', y='count',
-    hue='property', col='R', col_wrap=3,
-    orient="v", kind='bar', sharex=False, sharey=False,
-    order=cat_order,
-    col_order=col_order)
-
-g.fig.subplots_adjust(top=0.9)
-for ax in g.axes:
-    ax.set_xlabel('')
-g.fig.suptitle('40 Candidates 40 Voters')
 
 #%%
-data = pd.read_csv("resources/output/merged-stats-small-vcr.csv")
-
-#%%
-g = sns.catplot(data=data, x='property', y='count',
-    col='election', col_wrap=3,
-    orient="v", kind='bar', sharex=False, sharey=False, log=True)
-
-g.fig.subplots_adjust(top=0.9)
-g.fig.suptitle('Small Size Elections - All Combinations')
-
-#%%
-radiusParams={
-        4:(partial(gaussRadiusWrapper, R, 1.5, 0.5), partial(gaussRadiusWrapper, R, 1.5, 0.5)),
-        5:(partial(uniformRadiusWrapper, R, 0.7, 1.2), partial(gaussRadiusWrapper, R, 1.5, 0.5)),
-        6:(partial(gaussRadiusWrapper, R, 1.5, 0.5), partial(uniformRadiusWrapper, R, 0.7, 1.2)),
-        7:(partial(uniformRadiusWrapper, R, 0.7, 1.2), partial(uniformRadiusWrapper, R, 0.7, 1.2)),
-        8:(partial(uniformRadiusWrapper, R, 0, 3), partial(uniformRadiusWrapper, R, 0, 3)),
+catOrder = {
+    "uniform" :         "UCP/UVP",
+    "2gauss" :          "GCP/GVP",
+    "uniformgauss" :    "UCP/GVP",
+    "gaussuniform" :    "GCP/UVP",
 }
 
-C = 20
-V = 20
-profiles = {}
+colOrder = {
+    4 : "GCR/GVR",
+    5 : "SUCR/GVR",
+    6 : "GCR/SUVR",
+    7 : "SUCR/SUVR",
+    8 : "LUCR/LUVR",
+}
 
 #%%
-profiles = mergeDictLists(profiles, generateVCRProfileByRadiusUniformGauss(R, C, V, radiusParams))
+### EX.2 AGGREGATED STATS
+###############
+###############
+for k,v in colOrder.items():
+    g = sns.catplot(data=df4040[df4040['R'] == v], x='distribution', y='count',
+        hue='property',
+        orient="v", kind='bar', sharex=True, sharey=True, 
+        order=catOrder.values(), hue_order=["TVCR", "CR", "VR", "FCOP"],
+        palette="colorblind", legend_out=False, height=3.6, aspect=1)
+
+    if k != 4:
+        g._legend.remove()
+    # g.fig.subplots_adjust(top=0.9)
+    g.fig.suptitle("{}".format(v), y=0.9, x=0.55)
+    g.set(xlabel="", ylabel="")
+    if k == 7 or k == 6:
+        g.set(ylabel="Count")
+    g.set(yticks=[0, 200, 400, 600, 800, 1000], ylim=(0,1000))
+    # g.fig.subplots_adjust(top=0.9)
+    g.tight_layout()
+    savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter4/Figs/ex2-4040-stats-R{}.png".format(v.replace("/", "-"))
+    plt.savefig(savePath)
 
 #%%
-fig, ax = plt.subplots(4,5, figsize=(15,12))
+a = df4040[df4040['R'] == colOrder[8]]
 
-sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[4][0]))).A, cmap=['black', 'gray'], ax=ax[0][0])
-sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[5][0]))).A, cmap=['black', 'gray'], ax=ax[0][1])
-sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[6][0]))).A, cmap=['black', 'gray'], ax=ax[0][2])
-sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[7][0]))).A, cmap=['black', 'gray'], ax=ax[0][3])
-sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[8][0]))).A, cmap=['black', 'gray'], ax=ax[0][4])
+#%%
+a = df2020[df2020['R'] == colOrder[8]]
+a[a['distribution'] == 'GCP/GVP']
 
-sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[4][1]))).A, cmap=['black', 'gray'], ax=ax[1][0])
-sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[5][1]))).A, cmap=['black', 'gray'], ax=ax[1][1])
-sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[6][1]))).A, cmap=['black', 'gray'], ax=ax[1][2])
-sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[7][1]))).A, cmap=['black', 'gray'], ax=ax[1][3])
-sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[8][1]))).A, cmap=['black', 'gray'], ax=ax[1][4])
+#%%
+#### EX.1 SMALL PROFILES
+#####################
+####################
 
-sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[4][2]))).A, cmap=['black', 'gray'], ax=ax[2][0])
-sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[5][2]))).A, cmap=['black', 'gray'], ax=ax[2][1])
-sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[6][2]))).A, cmap=['black', 'gray'], ax=ax[2][2])
-sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[7][2]))).A, cmap=['black', 'gray'], ax=ax[2][3])
-sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[8][2]))).A, cmap=['black', 'gray'], ax=ax[2][4])
+#%%
+exOneDf = pd.read_csv("resources/output/merged-stats-small-vcr.csv")
+totals = exOneDf.groupby(['election'])['count'].sum().to_dict()
+exOneDf.reset_index()
+exOneDf['count'] = exOneDf.apply(lambda row: row['count'] / totals[row['election']], axis=1)
+exOneDf['property'] = exOneDf['property'].map({"vcr":"VCR", "ncop":"TVCR","not vcr":"NOT VCR"})
+# exOneDf.melt(ignore_index=False)
+exOneDf.head()
 
-sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[4][3]))).A, cmap=['black', 'gray'], ax=ax[3][0])
-sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[5][3]))).A, cmap=['black', 'gray'], ax=ax[3][1])
-sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[6][3]))).A, cmap=['black', 'gray'], ax=ax[3][2])
-sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[7][3]))).A, cmap=['black', 'gray'], ax=ax[3][3])
-sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(profiles[8][3]))).A, cmap=['black', 'gray'], ax=ax[3][4])
+#%%
+exOneDf.election.unique()
 
-# ax1[0].set_title("R=0.7")
-# ax1[0].set_xlabel("candidates")
-# ax1[0].set_ylabel("voters")
+#%%
+plt.figure(figsize=(7,4))
+g = sns.barplot(data=exOneDf,
+    x='election', y='count', hue='property',
+    palette="colorblind",
+    orient="v", log=False,
+    order=['3C3V', '4C4V', '4C6V', '6C4V', '5C5V'])
 
-# ax1[1].set_title("R=1.2")
-# ax1[1].set_xlabel("candidates")
-# ax1[1].set_ylabel("voters")
+g.set(yticklabels=["0%", "20%", "40%", "60%", "80%", "100%"], ylim=(0,1),
+    xticklabels=['{} Candidates\n{} Voters'.format(c,v) for c,v in zip([3,4,4,6,5],[3,4,6,4,5])])
 
-# ax2[0].set_title("R=Uniform<0.7,1.2>")
-# ax2[0].set_xlabel("candidates")
-# ax2[0].set_ylabel("voters")
+g.set_title("How many profiles are TVCR and VCR", size=14)
+g.set_ylabel("Percentage of all profiles", size=14)
+g.set_xlabel("Election Size", size=14)
 
-# ax2[1].set_title("R=Uniform<0,3>")
-# ax2[1].set_xlabel("candidates")
-# ax2[1].set_ylabel("voters")
+plt.legend(bbox_to_anchor=(1.01,1.02))
+plt.tight_layout()
+# savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter4/Figs/ex1-small-stats.png"
+# plt.savefig(savePath)
 
 
 #%%
-fig, ax = plt.subplots(2,5, figsize=(15,6))
+#### HEATMAP GRID
+#####################
+####################
+class heatmapGridProfile(NamedTuple):
+    R:str
+    dist:str
+    A:np.ndarray
 
-sns.heatmap((Profile.fromNumpy(profiles[4][0])).A, cmap=['black', 'gray'], ax=ax[0][0])
-sns.heatmap((Profile.fromNumpy(profiles[5][0])).A, cmap=['black', 'gray'], ax=ax[0][1])
-sns.heatmap((Profile.fromNumpy(profiles[6][0])).A, cmap=['black', 'gray'], ax=ax[0][2])
-sns.heatmap((Profile.fromNumpy(profiles[7][0])).A, cmap=['black', 'gray'], ax=ax[0][3])
-sns.heatmap((Profile.fromNumpy(profiles[8][0])).A, cmap=['black', 'gray'], ax=ax[0][4])
+#%%
+C = 40
+V = 40
+R = default_rng()
 
-sns.heatmap((Profile.fromNumpy(profiles[4][1])).A, cmap=['black', 'gray'], ax=ax[1][0])
-sns.heatmap((Profile.fromNumpy(profiles[5][1])).A, cmap=['black', 'gray'], ax=ax[1][1])
-sns.heatmap((Profile.fromNumpy(profiles[6][1])).A, cmap=['black', 'gray'], ax=ax[1][2])
-sns.heatmap((Profile.fromNumpy(profiles[7][1])).A, cmap=['black', 'gray'], ax=ax[1][3])
-sns.heatmap((Profile.fromNumpy(profiles[8][1])).A, cmap=['black', 'gray'], ax=ax[1][4])
+radiusParams={
+    4:(partial(gaussRadiusWrapper, R, 1.5, 0.5), partial(gaussRadiusWrapper, R, 1.5, 0.5)),
+    5:(partial(uniformRadiusWrapper, R, 0.7, 1.2), partial(gaussRadiusWrapper, R, 1.5, 0.5)),
+    6:(partial(gaussRadiusWrapper, R, 1.5, 0.5), partial(uniformRadiusWrapper, R, 0.7, 1.2)),
+    7:(partial(uniformRadiusWrapper, R, 0.7, 1.2), partial(uniformRadiusWrapper, R, 0.7, 1.2)),
+    8:(partial(uniformRadiusWrapper, R, 0, 3), partial(uniformRadiusWrapper, R, 0, 3)),
+}
+
+distFuns = {
+    'uniform':generateVCRProfileByRadiusUniform,
+    '2gauss':generateVCRProfileByRadius2Gauss, 
+    'gaussuniform':generateVCRProfileByRadiusGaussUniform, 
+    'uniformgauss':generateVCRProfileByRadiusUniformGauss
+}
+
+# radiusNames={
+#     4:"Radii Model\nG(1.5,0.5) G(1.5,0.5)",
+#     5:"Radii Model\nU(0.7,1.2) G(1.5,0.5)",
+#     6:"Radii Model\nG(1.5,0.5) U(0.7,1.2)",
+#     7:"Radii Model\nU(0.7,1.2) U(0.7,1.2)",
+#     8:"Radii Model\nU(0,3) U(0,3)"
+# }
+
+# distNames={
+#     'uniform':      "Position Model\nUniform Cands Uniform Voters",
+#     '2gauss':       "Position Model\nGauss Cands Gauss Voters",
+#     'uniformgauss': "Position Model\nUniform Cands Gauss Voters",
+#     'gaussuniform': "Position Model\nGauss Cands Uniform Voters"
+# }
 
 
+#%%
+profiles = []
+for dName, dFun in distFuns.items():
+    profilesByR = dFun(R, C, V, radiusParams)
+    for rName,profile in profilesByR.items():
+        pA = getVCRProfileInCRVROrder(Profile.fromNumpy(profile[0])).A
+        profiles.append(heatmapGridProfile(rName, dName, pA))
+
+hmDf = pd.DataFrame(profiles)
+# hmDf['R'] = hmDf['R'].map(radiusNames)
+# hmDf['X'] = hmDf['dist'].map(distNames)
+
+hmDf.head()
+
+#%%
+positionNames = {
+    "uniform" :         "UCP/UVP",
+    "2gauss" :          "GCP/GVP",
+    "uniformgauss" :    "UCP/GVP",
+    "gaussuniform" :    "GCP/UVP",
+}
+
+radiiNames = {
+    8 : "LUCR/LUVR",
+    4 : "GCR/GVR",
+    7 : "SUCR/SUVR",
+    5 : "SUCR/GVR",
+    6 : "GCR/SUVR",
+}
+
+def hm(data, color):
+    g = sns.heatmap(data=list(data.head(1)['A'])[0],
+        cmap=["white", "black"], #["lightcyan", "teal"],
+
+        cbar=False,
+        square=True,
+        linewidths=1,
+        linecolor="black")
+
+g = sns.FacetGrid(data=hmDf, row='dist', col='R',
+    col_order=radiiNames, row_order=positionNames,
+    margin_titles=False,
+    sharex=True, sharey=True)
+g.map_dataframe(hm)
+g.set_titles("")
+
+
+# g.fig.suptitle("Approval Matrices", x=0.5, y=1)
+
+for ax,col in zip(g.axes[0], radiiNames.values()):
+    ax.set_title(col, size=20)
+
+for ax,row in zip(g.axes[:,0], positionNames.values()):
+    ax.set_ylabel(row, size=20)
+
+g.tight_layout()
+
+savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter4/Figs/{}-{}-examples-grid.png".format(C,V)
+plt.savefig(savePath)
+
+#%%
+# sns.color_palette("colorblind")

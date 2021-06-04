@@ -35,7 +35,7 @@ def detectCOP(A, C, V, gEnv):
     return detectVRProperty(A, C, V, gEnv) or detectCRProperty(A, C, V, gEnv)
 
 #%%
-### DELETION
+### Single Deletion
 
 class deletionSearchResults(NamedTuple):
     status:int
@@ -81,11 +81,59 @@ def fullProfileSearch(profiles):
                 results.append(res2)
             results.append(fullDeletionSearch(property="cop", axis=keyDel, k=minKCOP))
     return results
-    
+
+#%%
+### Multi Deletion
+class multiDeletionSearchResults(NamedTuple):
+    status:int
+    kC:int
+    kV:int
+    combination:List[int]
+
+class fullMultiDeletionSearch(NamedTuple):
+    property:str
+    axis:int
+    kC:int
+    kV:int
+
+def multiCombinationDeletionSearch(A:np.ndarray, deleteAxis:int, propertyDetectionFun, gEnv) -> multiDeletionSearchResults:
+    k = 1
+    results = []
+    sT = time()
+    for dC,dV in sorted(list(product(range(1,5), range(1,5))), key=lambda t2: (t2[0] + t2[1])):
+        for combC,combV in product(combinations(range(A.shape[1]), dC), combinations(range(A.shape[0]),dV)):
+            tmpA = deleteCandidates(A, combC)
+            tmpA = deleteVoters(tmpA, combV)
+            tmpV,tmpC = getVCLists(tmpA)
+            propertyStatus = propertyDetectionFun(tmpA, tmpC, tmpV, gEnv)
+            if propertyStatus:
+                return multiDeletionSearchResults(status=1, kC=dC, kV=dV, combination=[(combC, combV)])
+    print("NOT FOUND ", time() - sT)
+    return multiDeletionSearchResults(status=0, kC=dC+1, kV=dV+1, combination=[])
+
+def fullProfileMultiSearch(profiles):
+    env = createGPEnv()
+    detectionFuns = {"cr":detectCRProperty, "vr":detectVRProperty}
+    deleteAxes = {"cand":1, "voter":0}
+    results = []
+    for i,profile in enumerate(profiles):
+        print("I={}, time2={}".format(i, strftime("%H:%M:%S", localtime())))
+        for keyDel,deletionAxis in deleteAxes.items():
+            minKCOP = (1000,1000)
+            for keyProp,detectF in detectionFuns.items():
+                res = multiCombinationDeletionSearch(np.copy(profile.A), deletionAxis, detectF, env)
+                minKCOP = (res.kC, res.kV) if sum(minKCOP) > res.kC + res.kV else minKCOP
+                res2 = fullMultiDeletionSearch(property=keyProp, axis=keyDel, kC=res.kC, kV=res.kV)
+                results.append(res2)
+            results.append(fullMultiDeletionSearch(property="cop", axis=keyDel, kC=minKCOP[0], kV=minKCOP[1]))
+    return results
+
+
 #%%
 ### RUNNER
 
 def runner(start:int, end:int, C:int, V:int, distribution:str, R:int):
+    print("RUNNING SINGLE DELETE")
     propertyType = "ncop"
     baseInPath = "resources/random/numpy/ncop/{}-{}-{}R-{}C{}V.npy".format(propertyType, distribution, R, C, V)
     baseOutStatsPath = "resources/random/ch7-transform/{}-{}-{}R-{}C{}V-{}S-{}E.csv".format("ncop", distribution, R, C, V, start, end)
@@ -95,6 +143,22 @@ def runner(start:int, end:int, C:int, V:int, distribution:str, R:int):
     profiles = map(Profile.fromNumpy, np.load(baseInPath)[start:end])
 
     transformStats = pd.DataFrame(fullProfileSearch(profiles))
+    transformStats['distribution'] = distribution
+    transformStats['R'] = R
+    transformStats.to_csv(baseOutStatsPath, index=False, header=True)
+    return transformStats
+
+def runnerMulti(start:int, end:int, C:int, V:int, distribution:str, R:int):
+    print("RUNNING MULTI DELETE")
+    propertyType = "ncop"
+    baseInPath = "resources/random/numpy/ncop/{}-{}-{}R-{}C{}V.npy".format(propertyType, distribution, R, C, V)
+    baseOutStatsPath = "resources/random/ch7-transform/multi-{}-{}-{}R-{}C{}V-{}S-{}E.csv".format("ncop", distribution, R, C, V, start, end)
+
+    print("\nLoading from : {}\nSaving to : {}\n".format(baseInPath, baseOutStatsPath))
+
+    profiles = map(Profile.fromNumpy, np.load(baseInPath)[start:end])
+
+    transformStats = pd.DataFrame(fullProfileMultiSearch(profiles))
     transformStats['distribution'] = distribution
     transformStats['R'] = R
     transformStats.to_csv(baseOutStatsPath, index=False, header=True)
@@ -111,6 +175,6 @@ if __name__ == "__main__":
     distribution = sys.argv[3]
     R = int(sys.argv[4])
     sT = time()
-    stats = runner(s, e, C, V, distribution, R)
+    stats = runnerMulti(s, e, C, V, distribution, R)
     print(time() - sT)
     print(stats.describe())
