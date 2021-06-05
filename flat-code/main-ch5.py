@@ -544,7 +544,8 @@ for k,v in colOrder.items():
         hue='property',
         orient="v", kind='bar', sharex=True, sharey=True, 
         order=catOrder.values(), hue_order=["TVCR", "CR", "VR", "FCOP"],
-        palette="colorblind", legend_out=False, height=3.6, aspect=1)
+        palette=["dodgerblue", "lightskyblue", "powderblue", "royalblue"],
+        legend_out=False, height=3.6, aspect=1)
 
     if k != 4:
         g._legend.remove()
@@ -587,7 +588,7 @@ exOneDf.election.unique()
 plt.figure(figsize=(7,4))
 g = sns.barplot(data=exOneDf,
     x='election', y='count', hue='property',
-    palette="colorblind",
+    palette=["lightblue", "cyan", "dodgerblue"],
     orient="v", log=False,
     order=['3C3V', '4C4V', '4C6V', '6C4V', '5C5V'])
 

@@ -229,27 +229,35 @@ R = [4,8]
 paths = ["resources/random/ch7-transform/{}-{}R/{}".format(dist,r,e) for dist in D for r in R  for e in os.listdir("resources/random/ch7-transform/{}-{}R".format(dist, r)) if e[-3:] == "csv"]
 
 #%%
-radiusParams={
-    4:"G(1.5,0.5) G(1.5,0.5)",
-    5:"U(0.7,1.2) G(1.5,0.5)",
-    6:"G(1.5,0.5) U(0.7,1.2)",
-    7:"U(0.7,1.2) U(0.7,1.2)",
-    8:"U(0,3) U(0,3)"
+positionNames = {
+    "uniform" :         "UCP/UVP",
+    "2gauss" :          "GCP/GVP",
+    "uniformgauss" :    "UCP/GVP",
+    "gaussuniform" :    "GCP/UVP",
 }
 
-distParams={
-    'uniform': "Uniform Cands\n Uniform Voters",
-    '2gauss': "Gauss Cands\n Gauss Voters",
-    'uniformgauss': "Uniform Cands\n Gauss Voters",
-    'gaussuniform': "Gauss Cands\n Uniform Voters"
+radiiNames = {
+    8 : "LUCR/LUVR",
+    4 : "GCR/GVR",
+    # 7 : "SUCR/SUVR",
+    # 5 : "SUCR/GVR",
+    # 6 : "GCR/SUVR",
+}
+
+propNames = {
+    "cr":"CR",
+    "vr":"VR",
+    "cop":"FCOP"
 }
 
 #%%
 transformDf = pd.concat((pd.read_csv(path) for path in paths))
-transformDf['deleted agent'] = transformDf['axis']
-transformDf['R'] = transformDf['R'].map(radiusParams)
-transformDf['distribution'] = transformDf['distribution'].map(distParams)
-transformDf.describe()
+transformDf['Deleted Agent'] = transformDf['axis'].map({"cand":"Candidate", "voter":"Voter"})
+transformDf['Radius Model'] = transformDf['R'].map(radiiNames)
+transformDf['Point Model'] = transformDf['distribution'].map(positionNames)
+transformDf['Property'] = transformDf['property'].map(propNames)
+
+transformDf.head()
 
 #%%
 tDfUniform = transformDf.loc[(transformDf['distribution'] == 'uniform')]
@@ -257,13 +265,31 @@ tDfGauss = transformDf.loc[(transformDf['distribution'] == '2gauss')]
 tDf1 = pd.concat([tDfUniform, tDfGauss])
 
 #%%
-sns.catplot(kind='violin',
-    data=transformDf, x='distribution', y='k',
-    hue='deleted agent', col='property', row='R',
-    split=True, sharex=False, sharey=True)
+plt.figure(figsize=(6,4))
+for kR,vR in radiiNames.items():
+    for kP,vP in propNames.items():
+        g = sns.violinplot(
+            data=transformDf[(transformDf['R'] == kR) & (transformDf['property']==kP)],
+            x='Point Model', y='k',
+            hue='Deleted Agent', col='Radius Model', row='property',
+            split=True,
+            palette=["lightblue", "dodgerblue"])
 
-savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter4/Figs/15-15-tr-grid-x{}-col{}-row{}.png"
-plt.savefig(savePath.format('dist', 'prop', 'R'))
+
+        g.set(yticklabels=[0,1,2,3,4,5], ylim=(0,6))
+        g.set_xticklabels(g.get_xticklabels(), size=14)
+
+        g.set_title("{} - {}".format(vP, vR), size=14)
+        g.set_ylabel("Agents Removed", size=14)
+        g.set_xlabel("")
+
+        if kP != "cr" or kR != 8:
+            g.legend_.remove()
+        plt.tight_layout()
+
+        savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter4/Figs/ex3-R{}-P{}.png".format(vR.replace("/","-"),vP)
+        plt.savefig(savePath)
+        plt.show()
 
 #%%
 print(transformDf.head(), sep=',')
@@ -275,3 +301,5 @@ def combs():
         for combC,combV in product(combinations(range(7), dC), combinations(range(7),dV)):
             res.append((combC, combV))
     return res
+
+#%%
