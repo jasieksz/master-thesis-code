@@ -292,6 +292,84 @@ for kR,vR in radiiNames.items():
         plt.show()
 
 #%%
+### MULTI GRID VIOLIN VIS
+############
+############
+############
+D = ['2gauss', 'uniform', 'gaussuniform', 'uniformgauss']
+R = [4,8]
+multiPaths = ["resources/random/ch7-transform/multi-{}-{}R/{}".format(dist,r,e) for dist in D for r in R  for e in os.listdir("resources/random/ch7-transform/multi-{}-{}R".format(dist, r)) if e[-3:] == "csv"]
+
+#%%
+positionNames = {
+    "uniform" :         "UCP/UVP",
+    "2gauss" :          "GCP/GVP",
+    "uniformgauss" :    "UCP/GVP",
+    "gaussuniform" :    "GCP/UVP",
+}
+
+radiiNames = {
+    8 : "LUCR/LUVR",
+    4 : "GCR/GVR",
+    # 7 : "SUCR/SUVR",
+    # 5 : "SUCR/GVR",
+    # 6 : "GCR/SUVR",
+}
+
+propNames = {
+    "cr":"CR",
+    "vr":"VR",
+    "cop":"FCOP"
+}
+
+#%%
+transformDf = pd.concat((pd.read_csv(path) for path in multiPaths))
+transformDf = transformDf.drop('axis', 1)
+transformDf['Deleted Agent'] = "Candidate"
+tmp = transformDf.copy(deep=True)
+tmp['Deleted Agent'] = "Voter"
+transformDf = pd.concat([transformDf, tmp])
+transformDf['k'] = transformDf.apply(lambda row: row['kC'] if row['Deleted Agent'] == "Candidate" else row['kV'], axis=1)
+transformDf = transformDf.drop('kC', 1)
+transformDf = transformDf.drop('kV', 1)
+transformDf['Radius Model'] = transformDf['R'].map(radiiNames)
+transformDf['Point Model'] = transformDf['distribution'].map(positionNames)
+transformDf['Property'] = transformDf['property'].map(propNames)
+transformDf = transformDf.drop('property', 1)
+transformDf = transformDf.drop('distribution', 1)
+transformDf.head()
+
+#%%
+
+#%%
+plt.figure(figsize=(6,4))
+for kR,vR in radiiNames.items():
+    for kP,vP in propNames.items():
+        print(transformDf[(transformDf['R'] == vR) & (transformDf['Property']==vP)].head())
+        g = sns.violinplot(
+            data=transformDf[(transformDf['R'] == vR) & (transformDf['Property']==vP)],
+            x='Point Model', y='k',
+            hue='Deleted Agent',
+            split=True,
+            palette=["lightblue", "dodgerblue"])
+
+
+        g.set(yticklabels=[0,1,2,3,4,5], ylim=(0,6))
+        g.set_xticklabels(g.get_xticklabels(), size=14)
+
+        g.set_title("{} - {}".format(vP, vR), size=14)
+        g.set_ylabel("Agents Removed", size=14)
+        g.set_xlabel("")
+
+        if kP != "cr" or kR != 8:
+            g.legend_.remove()
+        plt.tight_layout()
+
+        # savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter4/Figs/ex3-multi-R{}-P{}.png".format(vR.replace("/","-"),vP)
+        # plt.savefig(savePath)
+        plt.show()
+
+#%%
 print(transformDf.head(), sep=',')
 
 #%%
@@ -301,5 +379,3 @@ def combs():
         for combC,combV in product(combinations(range(7), dC), combinations(range(7),dV)):
             res.append((combC, combV))
     return res
-
-#%%

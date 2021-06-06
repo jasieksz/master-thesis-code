@@ -338,82 +338,6 @@ runnerVCRProfilesByRadiusUniformGauss(15,15)
 
 
 #%%
-i = 2
-fig, (ax1, ax2) = plt.subplots(1,2, figsize=(14,6))
-sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(d[0][i])).A), cmap=['black', 'gray'], ax=ax1)
-sns.heatmap((getVCRProfileInCRVROrder(Profile.fromNumpy(d[1][i])).A), cmap=['black', 'gray'], ax=ax2)
-ax1.set_title("Initial Approval Matrix")
-ax1.set_xlabel("candidates")
-ax1.set_ylabel("voters")
-
-ax2.set_title("VCR Ordered Approval Matrix")
-ax2.set_xlabel("candidates (reindexed)")
-ax2.set_ylabel("voters (reindexed)")
-
-#%%
-P44_0 = np.load('resources/random/numpy/vcr-uniform-0R-100C100V.npy')
-P44_1 = np.load('resources/random/numpy/vcr-uniform-1R-100C100V.npy')
-P44_2 = np.load('resources/random/numpy/vcr-uniform-2R-100C100V.npy')
-P44_3 = np.load('resources/random/numpy/vcr-uniform-3R-100C100V.npy')
-
-#%%
-print(Profile.fromNumpy(P44_3[0]))
-
-#%%
-i = 6
-fig, (ax1, ax2) = plt.subplots(2,2, figsize=(14,12))
-sns.heatmap(getVCRProfileInCRVROrder(Profile.fromNumpy(P44_0[i])).A, cmap=['black', 'gray'], ax=ax1[0])
-sns.heatmap(getVCRProfileInCRVROrder(Profile.fromNumpy(P44_1[i])).A, cmap=['black', 'gray'], ax=ax1[1])
-sns.heatmap(getVCRProfileInCRVROrder(Profile.fromNumpy(P44_2[i])).A, cmap=['black', 'gray'], ax=ax2[0])
-sns.heatmap(getVCRProfileInCRVROrder(Profile.fromNumpy(P44_3[i])).A, cmap=['black', 'gray'], ax=ax2[1])
-ax1[0].set_title("R=0.7")
-ax1[0].set_xlabel("candidates")
-ax1[0].set_ylabel("voters")
-
-ax1[1].set_title("R=1.2")
-ax1[1].set_xlabel("candidates")
-ax1[1].set_ylabel("voters")
-
-ax2[0].set_title("R=Uniform<0.7,1.2>")
-ax2[0].set_xlabel("candidates")
-ax2[0].set_ylabel("voters")
-
-ax2[1].set_title("R=Uniform<0,3>")
-ax2[1].set_xlabel("candidates")
-ax2[1].set_ylabel("voters")
-
-#%%
-i = 6
-fig, (ax1, ax2) = plt.subplots(2,2, figsize=(14,12))
-sns.heatmap((Profile.fromNumpy(P44_0[i])).A, cmap=['black', 'gray'], ax=ax1[0])
-sns.heatmap((Profile.fromNumpy(P44_1[i])).A, cmap=['black', 'gray'], ax=ax1[1])
-sns.heatmap((Profile.fromNumpy(P44_2[i])).A, cmap=['black', 'gray'], ax=ax2[0])
-sns.heatmap((Profile.fromNumpy(P44_3[i])).A, cmap=['black', 'gray'], ax=ax2[1])
-ax1[0].set_title("R=0.7")
-ax1[0].set_xlabel("candidates")
-ax1[0].set_ylabel("voters")
-
-ax1[1].set_title("R=1.2")
-ax1[1].set_xlabel("candidates")
-ax1[1].set_ylabel("voters")
-
-ax2[0].set_title("R=Uniform<0.7,1.2>")
-ax2[0].set_xlabel("candidates")
-ax2[0].set_ylabel("voters")
-
-ax2[1].set_title("R=Uniform<0,3>")
-ax2[1].set_xlabel("candidates")
-ax2[1].set_ylabel("voters")
-
-
-#%%
-# vIds, cIds = getVCLists(Profile.fromNumpy(P44_3[6]).A) 
-sT = time()
-print(detectVRProperty(Profile.fromNumpy(P44_3[6]).A, cIds, vIds, gEnv))
-time() - sT
-
-
-#%%
 
 #%%
 positionNames = {
@@ -487,34 +411,9 @@ def fullMergePandasStats2020(write=False):
 
 
 #%%
-basePath = "resources/random/pandas"
-paths = [e for e in os.listdir(basePath) if e[-3:] == "csv"]
-for filePath in sorted(paths):
-    df = pd.read_csv("{}/{}".format(basePath, filePath))
-    total = df['count'].sum()
-    missing = 1000 - df['count'].sum()
-    df["extra"] = (df['count'] / total) * missing
-    if missing != 0:
-        print(filePath, missing, "\n", df, "\n")
-
-#%%
-df = fullMergePandasStats4040(True)
-
-#%%
-fullMergePandasStats2020()['count'].sum()
-
-#%%
-dist = "gaussuniform"
-C,V = 40,40
-r = 4
-paths = [e for e in os.listdir("resources/random/spark/{}C{}V/ncop-{}-{}R-stats/".format(C, V, dist, r)) if e[-3:] == "csv"]
-d = pd.concat((pd.read_csv("resources/random/spark/{}C{}V/ncop-{}-{}R-stats/{}".format(C,V,dist, r, path)) for path in paths))
-d
-
-#%%
-print(d.groupby(['property', 'distribution', 'R']).sum().reset_index())
-
-#%%
+### EX.2 AGGREGATED STATS
+###############
+###############
 df4040 = fullMergePandasStats4040(False)
 df2020 = fullMergePandasStats2020(False)
 
@@ -535,10 +434,7 @@ colOrder = {
     8 : "LUCR/LUVR",
 }
 
-#%%
-### EX.2 AGGREGATED STATS
-###############
-###############
+
 for k,v in colOrder.items():
     g = sns.catplot(data=df4040[df4040['R'] == v], x='distribution', y='count',
         hue='property',
@@ -561,13 +457,6 @@ for k,v in colOrder.items():
     plt.savefig(savePath)
 
 #%%
-a = df4040[df4040['R'] == colOrder[8]]
-
-#%%
-a = df2020[df2020['R'] == colOrder[8]]
-a[a['distribution'] == 'GCP/GVP']
-
-#%%
 #### EX.1 SMALL PROFILES
 #####################
 ####################
@@ -578,17 +467,14 @@ totals = exOneDf.groupby(['election'])['count'].sum().to_dict()
 exOneDf.reset_index()
 exOneDf['count'] = exOneDf.apply(lambda row: row['count'] / totals[row['election']], axis=1)
 exOneDf['property'] = exOneDf['property'].map({"vcr":"VCR", "ncop":"TVCR","not vcr":"NOT VCR"})
-# exOneDf.melt(ignore_index=False)
 exOneDf.head()
 
-#%%
-exOneDf.election.unique()
 
 #%%
 plt.figure(figsize=(7,4))
 g = sns.barplot(data=exOneDf,
     x='election', y='count', hue='property',
-    palette=["lightblue", "cyan", "dodgerblue"],
+    palette=["dodgerblue", "lightskyblue", "royalblue"],
     orient="v", log=False,
     order=['3C3V', '4C4V', '4C6V', '6C4V', '5C5V'])
 
@@ -601,8 +487,8 @@ g.set_xlabel("Election Size", size=14)
 
 plt.legend(bbox_to_anchor=(1.01,1.02))
 plt.tight_layout()
-# savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter4/Figs/ex1-small-stats.png"
-# plt.savefig(savePath)
+savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter4/Figs/ex1-small-stats.png"
+plt.savefig(savePath)
 
 
 #%%
@@ -614,9 +500,9 @@ class heatmapGridProfile(NamedTuple):
     dist:str
     A:np.ndarray
 
-#%%
-C = 40
-V = 40
+
+C = 20
+V = 20
 R = default_rng()
 
 radiusParams={
@@ -682,12 +568,12 @@ radiiNames = {
 
 def hm(data, color):
     g = sns.heatmap(data=list(data.head(1)['A'])[0],
-        cmap=["white", "black"], #["lightcyan", "teal"],
+        cmap=["white", "dodgerblue"],
 
         cbar=False,
         square=True,
         linewidths=1,
-        linecolor="black")
+        linecolor="dodgerblue")
 
 g = sns.FacetGrid(data=hmDf, row='dist', col='R',
     col_order=radiiNames, row_order=positionNames,
@@ -707,7 +593,7 @@ for ax,row in zip(g.axes[:,0], positionNames.values()):
 
 g.tight_layout()
 
-savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter4/Figs/{}-{}-examples-grid.png".format(C,V)
+savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter4/Figs/{}-{}-examples-grid-blue.png".format(C,V)
 plt.savefig(savePath)
 
 #%%
