@@ -6,10 +6,11 @@
 from pysat.solvers import Glucose3
 import itertools
 from typing import NamedTuple, List
+from time import time
 
 class C1PResult(NamedTuple):
     status:bool
-    order:List[int]
+    time:float
 
 # permute columns such that all rows
 # have the consecutive ones property
@@ -25,6 +26,7 @@ def solve_sat(matrix):
         cols = range(num_cols)
     else:
         cols = range(10)
+    startTime = time()
     while True:
         # transitivity
         for x, y, z in itertools.combinations(cols, 3):
@@ -54,15 +56,16 @@ def solve_sat(matrix):
             g.add_clause(c)
 
         if not g.solve():
-            return C1PResult(False, [])
+            return C1PResult(status=False, time=time() - startTime)
         if len(cols) == num_cols:
             break
         cols = range(min(num_cols, len(cols)+STEP))
-
+    totalTime = time() - startTime
     pos = [0] * len(cols)
     model = g.get_model()
     for x in cols:
         for y in cols:
             if leftof(x, y) in model:
                 pos[x] += 1
-    return C1PResult(True, [a[1] for a in sorted(zip(pos, cols), reverse=True)])
+    order=[a[1] for a in sorted(zip(pos, cols), reverse=True)]
+    return C1PResult(status=True, time=totalTime)

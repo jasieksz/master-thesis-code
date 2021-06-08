@@ -2,7 +2,9 @@
 import gurobipy as gp
 from itertools import product
 from typing import List
+from time import time
 from numpy import ndarray
+from typing import NamedTuple
 
 
 # %%
@@ -184,12 +186,17 @@ def findVRPoints(A: ndarray, C: List[str], V: List[str], env):  # CR = 0
             return False, {"status": model.status}
 
 # %%
+class C1PResult(NamedTuple):
+    status:bool
+    time:float
+
 def detectVRProperty(A: ndarray, C: List[str], V: List[str], env):  # CR = 0
     indexPairs = list(product(range(len(C)), range(len(V))))
 
     if env is None:
         env = createGPEnv()
 
+    startTime = time()
     with gp.Model(env=env) as model:
         # Xa variable - positon of agent
         positions = {
@@ -230,8 +237,9 @@ def detectVRProperty(A: ndarray, C: List[str], V: List[str], env):  # CR = 0
 
         model.setParam('OutputFlag', False)
         model.optimize()
+        totalTime = time() - startTime
 
-        return True if model.Status == 2 else False
+        return C1PResult(status = True if model.Status == 2 else False, time=totalTime)
 
 # %%
 def detectCRProperty(A: ndarray, C: List[str], V: List[str], env):  # voter radius = 0
@@ -281,7 +289,7 @@ def detectCRProperty(A: ndarray, C: List[str], V: List[str], env):  # voter radi
         model.setParam('OutputFlag', False)
         model.optimize()
 
-        return True if model.Status == 2 else False
+        return C1PResult(status = True if model.Status == 2 else False, time=0)
 
 
 def findCRPoints(A: ndarray, C: List[str], V: List[str], env):  # voter radius = 0
