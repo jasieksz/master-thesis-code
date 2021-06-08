@@ -66,7 +66,7 @@ def wrapperILP(gEnv, A:np.ndarray):
 
 #%%
 def runner(gEnv, runNumber:int):
-    algo = {"ilp":partial(wrapperILP, gEnv), "sat":partial(wrapperSAT)}
+    algo = {"ILP":partial(wrapperILP, gEnv), "SAT":partial(wrapperSAT)}
     electionSize = {"small":(15,15), "medium":(20,20), "large":(40,40)}
     results = []
     for eName, eSize in electionSize.items():
@@ -83,22 +83,40 @@ res = runner(gEnv, 0)
 
 #%%
 df = pd.DataFrame(res)
+df['Election Size'] = df['electionSize'].map({
+    "small":"15 Candidates\n15Voters",
+    "medium":"20 Candidates\n20Voters",
+    "large":"40 Candidates\n40Voters",
+})
+df['Algorithm'] = df['algo'].map({"ilp":"ILP", "sat":"SAT"})
+df['Detection time'] = df['time']
+
 #%%
 df.head()
 
 #%%
-sns.catplot(kind="violin", data=df, x="time", y="algo", col="electionSize", sharex=False, orient="h", inner="point", scale="count")
+g = sns.catplot(kind="violin", data=df, x="Detection time", y="Algorithm", col="Election Size",
+    sharex=False, orient="h", inner="point", scale="count", palette=["dodgerblue", "lightskyblue"])
+
+g.tight_layout()
+savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter3/Figs/ex1-violin.png"
+plt.savefig(savePath)
 
 #%%
-sns.catplot(kind="box", data=df, x="time", y="algo", col="electionSize", sharex=False, orient="h")
+g = sns.catplot(kind="box", data=df, x="Detection time", y="Algorithm", col="Election Size",
+    sharex=False, orient="h", palette=["dodgerblue", "lightskyblue"])
+
+g.tight_layout()
+savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter3/Figs/ex1-box.png"
+plt.savefig(savePath)
 
 #%%
-sns.catplot(kind="swarm", data=df, x="time", y="algo", col="electionSize", sharex=False, orient="h")
+g = sns.catplot(kind="swarm", data=df, x="Detection time", y="Algorithm",
+    col="Election Size", sharex=False, sharey=False,
+    orient="h", palette=["dodgerblue", "lightskyblue"])
+
+g.tight_layout()
+savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter3/Figs/ex1-swarm.png"
+plt.savefig(savePath)
 
 #%%
-ax = sns.boxplot(x="algo", y="time", data=df, whis=np.inf)
-ax = sns.swarmplot(x="algo", y="time", data=df, color=".2")
-
-#%%
-sns.catplot(kind="swarm", data=df[df["algo"]=="sat"], x="time", y="electionSize",
-    hue="electionSize", sharex=False, orient="h")
