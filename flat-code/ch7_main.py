@@ -247,7 +247,7 @@ radiiNames = {
 propNames = {
     "cr":"CR",
     "vr":"VR",
-    "cop":"FCOP"
+    "cop":"CRVR"
 }
 
 #%%
@@ -256,25 +256,19 @@ transformDf['Deleted Agent'] = transformDf['axis'].map({"cand":"Candidate", "vot
 transformDf['Radius Model'] = transformDf['R'].map(radiiNames)
 transformDf['Point Model'] = transformDf['distribution'].map(positionNames)
 transformDf['Property'] = transformDf['property'].map(propNames)
-
 transformDf.head()
 
 #%%
-tDfUniform = transformDf.loc[(transformDf['distribution'] == 'uniform')]
-tDfGauss = transformDf.loc[(transformDf['distribution'] == '2gauss')]
-tDf1 = pd.concat([tDfUniform, tDfGauss])
-
-#%%
-plt.figure(figsize=(6,4))
 for kR,vR in radiiNames.items():
     for kP,vP in propNames.items():
+        plt.figure(figsize=(5,3))
         g = sns.violinplot(
             data=transformDf[(transformDf['R'] == kR) & (transformDf['property']==kP)],
             x='Point Model', y='k',
             hue='Deleted Agent', col='Radius Model', row='property',
             split=True,
-            palette=["lightblue", "dodgerblue"])
-
+            palette=["lightblue", "dodgerblue"],
+            order=positionNames.values())
 
         g.set(yticklabels=[0,1,2,3,4,5], ylim=(0,6))
         g.set_xticklabels(g.get_xticklabels(), size=14)
@@ -287,8 +281,8 @@ for kR,vR in radiiNames.items():
             g.legend_.remove()
         plt.tight_layout()
 
-        savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter4/Figs/ex3-R{}-P{}.png".format(vR.replace("/","-"),vP)
-        plt.savefig(savePath)
+        # savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter4/Figs/ex3-R{}-P{}.png".format(vR.replace("/","-"),vP)
+        # plt.savefig(savePath)
         plt.show()
 
 #%%
@@ -319,7 +313,7 @@ radiiNames = {
 propNames = {
     "cr":"CR",
     "vr":"VR",
-    "cop":"FCOP"
+    "cop":"CRVR"
 }
 
 #%%
@@ -340,21 +334,38 @@ transformDf = transformDf.drop('distribution', 1)
 transformDf.head()
 
 #%%
+# SAVE TO LATEX TABLE
+#######
+#########
+statDf = transformDf.copy(deep=True)
+statDf = statDf.drop('R', axis=1)
+statDfAll = statDf.groupby(['Radius Model', 'Property', 'Deleted Agent']).describe(percentiles=[])
+statDfAll.columns = statDfAll.columns.droplevel()
+
+tableSavePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter4/Figs/table-ex31.tex"
+statDfAll[['mean', 'std', 'min', 'max']] \
+    .to_latex(buf=tableSavePath,
+        float_format="%.3f",
+        caption="Statistical parameters for number of deleted agents, grouped by categories.",
+        multirow=True
+    )
 
 #%%
-plt.figure(figsize=(6,4))
+# VIOLINS MUTLI
+#######
 for kR,vR in radiiNames.items():
     for kP,vP in propNames.items():
-        print(transformDf[(transformDf['R'] == vR) & (transformDf['Property']==vP)].head())
+        plt.figure(figsize=(5,3))
         g = sns.violinplot(
-            data=transformDf[(transformDf['R'] == vR) & (transformDf['Property']==vP)],
+            data=transformDf[(transformDf['Radius Model'] == vR) & (transformDf['Property']==vP)],
             x='Point Model', y='k',
             hue='Deleted Agent',
             split=True,
-            palette=["lightblue", "dodgerblue"])
+            palette=["lightblue", "dodgerblue"],
+            order=positionNames.values())
 
 
-        g.set(yticklabels=[0,1,2,3,4,5], ylim=(0,6))
+        g.set(yticklabels=[0,1,2,3,4], ylim=(0,5))
         g.set_xticklabels(g.get_xticklabels(), size=14)
 
         g.set_title("{} - {}".format(vP, vR), size=14)

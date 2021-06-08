@@ -16,9 +16,10 @@ networkx = "*"
 pulp = "*"
 autopep8 = "*"
 pyspark = "*"
-gurobipy = {file = "https://pypi.gurobi.com/gurobipy/gurobipy-9.1.0-cp38-cp38-manylinux1_x86_64.whl"}
 seaborn = "*"
 notebook = "*"
+gurobipy = "*"
+python-sat = "==0.1.7.dev3"
 
 [requires]
 python_version = "3.8"
