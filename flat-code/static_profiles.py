@@ -54,3 +54,8 @@ def VR_77_0():
 def VCR_CV_S(c:int, v:int, s:int):
     A = np.load("resources/random/numpy/vcr-{}C{}V-{}S.npy".format(c,v,s))
     return list(map(Profile.fromNumpy, A))
+
+def VCR_dist_r_cv(c:int, v:int, dist:str, r:int):
+    A = np.load("resources/random/numpy/vcr-{}-{}R-{}C{}V.npy".format(dist, r, c, v))
+    return list(map(Profile.fromNumpy, A))
+
