@@ -52,6 +52,7 @@ print("ILP = {}\nSAT = {}".format(ilpRes, satRes))
 #%%
 class IlpSatResult(NamedTuple):
     time:float
+    status:bool
     algo:str
     electionSize:str
     profileI:int
@@ -75,48 +76,73 @@ def runner(gEnv, runNumber:int):
             print(i)
             for algoName, algoFun in algo.items():
                 res = algoFun(approvalMatrix)
-                results.append(IlpSatResult(time=res.time, algo=algoName, electionSize=eName, profileI=i, runNumber=runNumber))
+                results.append(IlpSatResult(time=res.time, status=res.status, algo=algoName, electionSize=eName, profileI=i, runNumber=runNumber))
     return results
 
 #%%
-res = runner(gEnv, 0)
+res = runner(gEnv, 2)
 
-#%%
 df = pd.DataFrame(res)
 df['Election Size'] = df['electionSize'].map({
     "small":"15 Candidates\n15Voters",
     "medium":"20 Candidates\n20Voters",
     "large":"40 Candidates\n40Voters",
 })
-df['Algorithm'] = df['algo'].map({"ilp":"ILP", "sat":"SAT"})
+df['Algorithm'] = df['algo']
 df['Detection time'] = df['time']
-
-#%%
+df['Detection status'] = df['status']
 df.head()
 
 #%%
-g = sns.catplot(kind="violin", data=df, x="Detection time", y="Algorithm", col="Election Size",
-    sharex=False, orient="h", inner="point", scale="count", palette=["dodgerblue", "lightskyblue"])
-
-g.tight_layout()
-savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter3/Figs/ex1-violin.png"
-plt.savefig(savePath)
+# dfAll.to_csv('resources/random/ch3-ilp-sat.csv', header=True, index=False)
 
 #%%
-g = sns.catplot(kind="box", data=df, x="Detection time", y="Algorithm", col="Election Size",
+dfAll = pd.concat([dfAll, df])
+dfAll.head()
+
+#%%
+dfAll = pd.read_csv('resources/random/ch3-ilp-sat.csv')
+df2 = dfAll.groupby(['Algorithm', 'Election Size', 'Detection status', 'profileI', 'status']).min()
+df2 = df2.reset_index()
+df2.head()
+
+#%%
+dfStat = df2.groupby(['Algorithm', 'Election Size'])[['Algorithm', 'Election Size', 'time']].describe(percentiles=[])
+dfStat.columns = dfStat.columns.droplevel()
+
+tableSavePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter3/Figs/table-ex.tex"
+dfStat[['mean', 'std',]] \
+    .to_latex(buf=tableSavePath,
+        float_format="%.3f",
+        caption="Statistical metrics for detection time, gropued by algorithm and election size.",
+        multirow=True
+    )
+
+#%%
+g = sns.catplot(kind="violin", data=dfAll, x="Detection time", y="Algorithm", col="Election Size",
+    hue="Detection status", split=True,
+    sharex=False, orient="h", inner="point", scale="count", palette=["dodgerblue", "darkorange"])
+
+g.tight_layout()
+# savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter3/Figs/ex1-violin.png"
+# plt.savefig(savePath)
+
+#%%
+g = sns.catplot(kind="box", data=dfAll,
+    x="Detection time", y="Algorithm", col="Election Size", hue="Detection status",
     sharex=False, orient="h", palette=["dodgerblue", "lightskyblue"])
 
 g.tight_layout()
-savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter3/Figs/ex1-box.png"
-plt.savefig(savePath)
+# savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter3/Figs/ex1-box.png"
+# plt.savefig(savePath)
 
 #%%
-g = sns.catplot(kind="swarm", data=df, x="Detection time", y="Algorithm",
-    col="Election Size", sharex=False, sharey=False,
-    orient="h", palette=["dodgerblue", "lightskyblue"])
+g = sns.catplot(kind="swarm", data=df2, x="Detection time", y="Algorithm",
+    hue="Detection status", col="Election Size", sharex=False, sharey=False,
+    orient="h", palette=["dodgerblue", "darkorange"])
 
 g.tight_layout()
-savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter3/Figs/ex1-swarm.png"
-plt.savefig(savePath)
+# savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter3/Figs/ex1-swarm.png"
+# plt.savefig(savePath)
 
 #%%
