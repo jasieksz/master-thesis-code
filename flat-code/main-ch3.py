@@ -19,6 +19,9 @@ import seaborn as sns
 import pandas as pd
 
 #%%
+time()
+
+#%%
 def prefHeatmap(profile):
     plt.figure(figsize=(7,5))
     sns.heatmap((getVCRProfileInCRVROrder(profile)).A, cmap=['black', 'gray'])
@@ -106,6 +109,9 @@ df2 = dfAll.groupby(['Algorithm', 'Election Size', 'Detection status', 'profileI
 df2 = df2.reset_index()
 df2.head()
 
+#%%
+dfStat = df2.groupby(['Algorithm', 'Election Size'])[['Algorithm', 'Election Size', 'time']].describe(percentiles=[])
+dfStat
 #%%
 dfStat = df2.groupby(['Algorithm', 'Election Size'])[['Algorithm', 'Election Size', 'time']].describe(percentiles=[])
 dfStat.columns = dfStat.columns.droplevel()
