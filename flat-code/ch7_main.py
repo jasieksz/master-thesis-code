@@ -259,6 +259,11 @@ transformDf['Property'] = transformDf['property'].map(propNames)
 transformDf.head()
 
 #%%
+blues4 = cm.get_cmap('Blues', 10)
+palette=[blues4(3), blues4(7)],
+
+
+#%%
 for kR,vR in radiiNames.items():
     for kP,vP in propNames.items():
         plt.figure(figsize=(5,3))
@@ -267,7 +272,7 @@ for kR,vR in radiiNames.items():
             x='Point Model', y='k',
             hue='Deleted Agent', col='Radius Model', row='property',
             split=True,
-            palette=["lightblue", "dodgerblue"],
+            palette=[blues4(3), blues4(7)],
             order=positionNames.values())
 
         g.set(yticklabels=[0,1,2,3,4,5], ylim=(0,6))
@@ -281,7 +286,7 @@ for kR,vR in radiiNames.items():
             g.legend_.remove()
         plt.tight_layout()
 
-        # savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter4/Figs/ex3-R{}-P{}.png".format(vR.replace("/","-"),vP)
+        # savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter4/Figs/alt-ex3-R{}-P{}.png".format(vR.replace("/","-"),vP)
         # plt.savefig(savePath)
         plt.show()
 
@@ -361,7 +366,7 @@ for kR,vR in radiiNames.items():
             x='Point Model', y='k',
             hue='Deleted Agent',
             split=True,
-            palette=["lightblue", "dodgerblue"],
+            palette=[blues4(3), blues4(7)],
             order=positionNames.values())
 
 
@@ -376,7 +381,7 @@ for kR,vR in radiiNames.items():
             g.legend_.remove()
         plt.tight_layout()
 
-        # savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter4/Figs/ex3-multi-R{}-P{}.png".format(vR.replace("/","-"),vP)
+        # savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter4/Figs/alt-ex3-multi-R{}-P{}.png".format(vR.replace("/","-"),vP)
         # plt.savefig(savePath)
         plt.show()
 

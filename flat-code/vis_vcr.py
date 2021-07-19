@@ -27,7 +27,7 @@ class Agent(NamedTuple):
     color:str
 
 def vcrProfileToAgents(profile:Profile) -> List[Agent]:
-    oB = 0.25
+    oB = 0.1
     agents = []
     voteCounts = sum(profile.A)
     for y,c,vC in zip(np.arange(oB, len(profile.C)/2 + oB, oB), profile.C, voteCounts):
@@ -36,7 +36,7 @@ def vcrProfileToAgents(profile:Profile) -> List[Agent]:
                 end=c.x + c.r,
                 offset=y,
                 voteCount=vC,
-                color='dimgray')
+                color='dodgerblue')
         agents.append(a)
     for y,v in zip(np.arange(-oB, -len(profile.V)/2 - oB, -oB), profile.V):
         a = Agent(id=v.id,
@@ -44,7 +44,7 @@ def vcrProfileToAgents(profile:Profile) -> List[Agent]:
                 end=v.x + v.r,
                 offset=y,
                 voteCount=0,
-                color='slategrey')
+                color='lightskyblue')
         agents.append(a)
     return agents
 
@@ -73,37 +73,51 @@ def formatter(agents, y, pos):
 
 def plotVCRAgents(agents:List[Agent]) -> None:
 
-    viridis = cm.get_cmap('viridis', len(agents)) 
-    oB = 0.075
+    viridis = cm.get_cmap('Blues', len(agents)) 
+    viridis2 = cm.get_cmap('Reds', len(agents)*2) 
+
+    oB = 0.01
     df = pd.DataFrame(agents)
-    plt.figure(figsize=(10,8))
+    fig = plt.figure(figsize=(4,3))
     for i,a in enumerate(agents):
-        p1 = plt.hlines(y=a.offset,
-                    xmin=a.start,
-                    xmax=a.end,
-                    label=a.id,
-                    color=a.color,#viridis(i/len(agents)),
-                    linewidth=4)
+        if True or 'V' not in a.id:
+            p1 = plt.hlines(y=a.offset,
+                        xmin=a.start,
+                        xmax=a.end,
+                        label=a.id,
+                        color=a.color,#viridis(i/len(agents) + 0.6) if 'C' in a.id else viridis2(i/len(agents)),
+                        linewidth=3)
 
-        p2 = plt.vlines(x=a.start,
-                        ymin=a.offset-oB,
-                        ymax=a.offset+oB, 
-                        color=a.color,#viridis(i/len(agents)),
-                        linewidth=4)
+            plt.text(a.start + (a.end - a.start)/2, a.offset+0.005, a.id, ha='center', va='bottom', size=14)
 
-        p3 = plt.vlines(x=a.end,
-                        ymin=a.offset-oB,
-                        ymax=a.offset+oB, 
-                        color=a.color,#viridis(i/len(agents)),
-                        linewidth=4)
+            p2 = plt.vlines(x=a.start,
+                            ymin=a.offset-oB,
+                            ymax=a.offset+oB, 
+                            color=a.color,#viridis(i/len(agents) + 0.6) if 'C' in a.id else viridis2(i/len(agents)),
+                            linewidth=3)
+
+            p3 = plt.vlines(x=a.end,
+                            ymin=a.offset-oB,
+                            ymax=a.offset+oB, 
+                            color=a.color,#viridis(i/len(agents) + 0.6) if 'C' in a.id else viridis2(i/len(agents)),
+                            linewidth=3)
 
     plt.xlim([df.start.min()-0.5, df.end.max()+0.5])
-    plt.ylim([df.offset.min()-0.5, df.offset.max()+0.5])
-    plt.legend(bbox_to_anchor = (1.0, 1), loc = 'upper center')
+    plt.ylim([df.offset.min()-0.1, df.offset.max()+0.1])
+    # plt.legend(bbox_to_anchor = (1.05, 1), loc = 'upper center')
     plt.grid(b=True, axis='x')
-    plt.yticks([a.offset for a in agents], [a.id + " vc=" + str(a.voteCount) for a in agents])
+    fig.axes[0].get_yaxis().set_visible(False)
+    # plt.yticks([a.offset for a in agents], [a.id + " vc=" + str(a.voteCount) for a in agents])
+    # plt.xticks(ticks=list(range(5)), labels=["$p$", *["$c_{}$".format(i) for i in range(1,7)]], size=13)
+    # plt.xticks(ticks=list(range(5)), labels=["$c_{1}$\n$c_{0}$", "$c_{2}$", "$c_{4}$\n$c_{3}$", "$c_{5}$", "$c_{7}$\n$c_{6}$"], size=13)
+    # plt.xticks(ticks=list(range(6)), labels=["$v_{1}$", "$v_{3}$\n$v_{2}$", "$v_{5}$\n$v_{4}$", "$v_{6}$", "$v_{7}$", "$v_{0}$"], size=13)
+    # fig.axes[0].get_xticklabels()[4].set_color("dodgerblue")
+    # fig.axes[0].get_xticklabels()[5].set_color("dodgerblue")
+    # fig.axes[0].get_xticklabels()[6].set_color("dodgerblue")
+    plt.tight_layout()
     partialFormatter = partial(formatter, agents)
-    # plt.gca().yaxis.set_major_formatter(ticker.FuncFormatter(partialFormatter))
+    # savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter2/Figs/alt-ncop-election-example.png"
+    # plt.savefig(savePath)
     plt.show()
 
 #%%

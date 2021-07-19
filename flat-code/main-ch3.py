@@ -83,7 +83,7 @@ def runner(gEnv, runNumber:int):
     return results
 
 #%%
-res = runner(gEnv, 2)
+# res = runner(gEnv, 2)
 
 df = pd.DataFrame(res)
 df['Election Size'] = df['electionSize'].map({
@@ -107,6 +107,11 @@ dfAll.head()
 dfAll = pd.read_csv('resources/random/ch3-ilp-sat.csv')
 df2 = dfAll.groupby(['Algorithm', 'Election Size', 'Detection status', 'profileI', 'status']).min()
 df2 = df2.reset_index()
+df2['Election Size'] = df2['Election Size'].map({
+    "15 Candidates\n15Voters": "15 Candidates 15 Voters",
+    "20 Candidates\n20Voters": "20 Candidates 20 Voters",
+    "40 Candidates\n40Voters": "40 Candidates 40 Voters",
+})
 df2.head()
 
 #%%
@@ -116,21 +121,57 @@ dfStat
 dfStat = df2.groupby(['Algorithm', 'Election Size'])[['Algorithm', 'Election Size', 'time']].describe(percentiles=[])
 dfStat.columns = dfStat.columns.droplevel()
 
-tableSavePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter3/Figs/table-ex.tex"
-dfStat[['mean', 'std',]] \
-    .to_latex(buf=tableSavePath,
-        float_format="%.3f",
-        caption="Statistical metrics for detection time, gropued by algorithm and election size.",
-        multirow=True
-    )
+# tableSavePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter3/Figs/table-ex.tex"
+# dfStat[['mean', 'std',]] \
+#     .to_latex(buf=tableSavePath,
+#         float_format="%.3f",
+#         caption="Statistical metrics for detection time, gropued by algorithm and election size.",
+#         multirow=True
+#     )
 
 #%%
-g = sns.catplot(kind="violin", data=dfAll, x="Detection time", y="Algorithm", col="Election Size",
-    hue="Detection status", split=True,
-    sharex=False, orient="h", inner="point", scale="count", palette=["dodgerblue", "darkorange"])
+for k,v in {
+    "15 Candidates\n15Voters": "15 Candidates 15 Voters",
+    "20 Candidates\n20Voters": "20 Candidates 20 Voters",
+    "40 Candidates\n40Voters": "40 Candidates 40 Voters",
+}.items():
+    g = sns.catplot(kind="violin", data=df2[df2['Election Size'] == v], x="Detection time", y="Algorithm", col="Election Size",
+        hue="Detection status", split=True,
+        sharex=False, orient="h", inner="point", scale="count", palette=["dodgerblue", "lightskyblue"],
+        height=12, aspect=1.2)
 
+    g.set_titles("{col_name}", size=14)
+    g.set_xlabels("Detection time, seconds", size=14)
+    g.set_ylabels("Algorithm", size=14)
+    g.set_yticklabels(["ILP", "SAT"], size=12)
+
+    if v != "40 Candidates 40 Voters":
+        g._legend.remove()
+    g.tight_layout()
+
+    # savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter3/Figs/ex1-violin-{}.png".format(v[:2])
+    # plt.savefig(savePath)
+
+#%%
+blues4 = cm.get_cmap('Blues_r', 10)
+palette=[blues4(3), blues4(7)]
+
+
+sns.set(font_scale = 1.1)
+g = sns.catplot(kind="violin", data=df2, x="Detection time", y="Algorithm", col="Election Size",
+    hue="Detection status", split=True,
+    sharex=False, orient="h", inner="point", scale="count",
+    palette=[blues4(2), blues4(6)],
+    height=3.75, aspect=1.1, legend=False)
+
+g.set_titles("{col_name}", size=14)
+g.set_xlabels("Detection time, seconds", size=14)
+g.set_ylabels("Algorithm", size=14)
+g.set_yticklabels(["ILP", "SAT"], size=14)
+plt.legend(bbox_to_anchor=(0.5, 0.35), loc=2, borderaxespad=0., title="Detection status")
 g.tight_layout()
-# savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter3/Figs/ex1-violin.png"
+
+# savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter3/Figs/alt-ex1-violin.png"
 # plt.savefig(savePath)
 
 #%%
@@ -145,7 +186,7 @@ g.tight_layout()
 #%%
 g = sns.catplot(kind="swarm", data=df2, x="Detection time", y="Algorithm",
     hue="Detection status", col="Election Size", sharex=False, sharey=False,
-    orient="h", palette=["dodgerblue", "darkorange"])
+    orient="h", palette=["dodgerblue", "lightskyblue"])
 
 g.tight_layout()
 # savePath = "/home/jasiek/Projects/AGH/MGR/master-thesis/Chapter3/Figs/ex1-swarm.png"

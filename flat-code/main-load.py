@@ -3,7 +3,7 @@ import numpy as np
 from time import time
 from generation import parallelGenerateApprovalCombinations
 from definitions import Profile
-from vcrDetection import detectVCRProperty, detectCRProperty, detectVRProperty, createGPEnv
+from vcrDetectionAlt import detectVCRProperty, detectCRProperty, detectVRProperty, createGPEnv
 from utils import getNumpyColumns
 from functools import partial
 import sys
@@ -51,4 +51,14 @@ if __name__ == "__main__":
 
 
 
+#%%
+sc = SparkContext.getOrCreate()
+spark = SparkSession.builder.getOrCreate()
 
+#%%
+P44 = loadProfiles(C=4, V=4, subSet=0)
+
+#%%
+ncopP = P44.take(1)[0]
+
+#%%
